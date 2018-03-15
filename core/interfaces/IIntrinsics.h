@@ -45,7 +45,7 @@ namespace intrinsics {
          */
         template <typename T>
         scene::TImagePoint<T> undistort(const scene::TImagePoint<T> &pd) {
-            return static_cast<TDerived *>(this)->undistortImpl<T>(pd);
+            return static_cast<TDerived *>(this)->template undistortImpl<T>(pd);
         }
 
         /***
@@ -55,7 +55,7 @@ namespace intrinsics {
          */
         template <typename T>
         scene::TImagePoint<T> distort(const scene::TImagePoint<T> &p) {
-            return static_cast<TDerived *>(this)->distortImpl<T>(p);
+            return static_cast<TDerived *>(this)->template distortImpl<T>(p);
         }
 
         /***
@@ -65,7 +65,7 @@ namespace intrinsics {
          */
         template <typename T>
         scene::TImagePoint<T> project(const scene::TWorldPoint<T> &wp) {
-            return static_cast<TDerived *>(this)->projectImpl<T>(wp);
+            return static_cast<TDerived *>(this)->template projectImpl<T>(wp);
         }
 
         /***
@@ -75,7 +75,7 @@ namespace intrinsics {
          */
         template <typename T>
         scene::THomogeneousWorldPoint<T> backproject(const scene::TImagePoint<T> &p) {
-            return static_cast<TDerived *>(this)->backprojectImpl<T>(p);
+            return static_cast<TDerived *>(this)->template backprojectImpl<T>(p);
         }
 
 

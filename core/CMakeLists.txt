@@ -14,7 +14,7 @@ add_library(core STATIC
         interfaces/INode.h
         interfaces/IScene.h
         interfaces/ITwo_View.h
-        interfaces/Definitions.h utils/DivisionModelUtilities.cpp utils/DivisionModelUtilities.h)
+        interfaces/Definitions.h utils/DivisionModelUtilities.h utils/DivisionModelFunctors.h utils/DivisionModelTriangulation.cpp utils/DivisionModelTriangulation.h)
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/interfaces ${CERES_LIBRARIES} ${Boost_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/submodules/Sophus)

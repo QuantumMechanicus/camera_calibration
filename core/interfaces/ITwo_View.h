@@ -44,42 +44,47 @@ namespace scene {
 
         template<typename T>
         scene::TImagePoint<T> undistortLeft(const scene::TImagePoint<T> &pd) const {
-            return static_cast<TDerived *>(this)->undistortLeftImpl<T>(pd);
+            return static_cast<TDerived *>(this)->template undistortLeftImpl<T>(pd);
         }
 
         template<typename T>
         scene::TImagePoint<T> undistortRight(const scene::TImagePoint<T> &pd) const {
-            return static_cast<TDerived *>(this)->undistortRightImpl<T>(pd);
+            return static_cast<TDerived *>(this)->template undistortRightImpl<T>(pd);
         }
 
         template<typename T>
         scene::TImagePoint<T> distortLeft(const scene::TImagePoint<T> &pd) const {
-            return static_cast<TDerived *>(this)->distortLeftImpl<T>(pd);
+            return static_cast<TDerived *>(this)->template distortLeftImpl<T>(pd);
         }
 
         template<typename T>
         scene::TImagePoint<T> distortRight(const scene::TImagePoint<T> &pd) const {
-            return static_cast<TDerived *>(this)->distortRightImpl<T>(pd);
+            return static_cast<TDerived *>(this)->template distortRightImpl<T>(pd);
         }
 
         template<typename T>
         scene::TImagePoint<T> projectLeft(const scene::TWorldPoint<T> &wp) const {
-            return static_cast<TDerived *>(this)->projectLeftImpl<T>(wp);
+            return static_cast<TDerived *>(this)->template projectLeftImpl<T>(wp);
         }
 
         template<typename T>
         scene::THomogeneousWorldPoint<T> backprojectLeft(const scene::TImagePoint<T> &p) const {
-            return static_cast<TDerived *>(this)->backprojectLeftImpl<T>(p);
+            return static_cast<TDerived *>(this)->template backprojectLeftImpl<T>(p);
         }
 
         template<typename T>
         scene::TImagePoint<T> projectRight(const scene::TWorldPoint<T> &wp) const {
-            return static_cast<TDerived *>(this)->projectRightImpl<T>(wp);
+            return static_cast<TDerived *>(this)->template projectRightImpl<T>(wp);
         }
 
         template<typename T>
         scene::THomogeneousWorldPoint<T> backprojectRight(const scene::TImagePoint<T> &p) const {
-            return static_cast<TDerived *>(this)->backprojectRightImpl<T>(p);
+            return static_cast<TDerived *>(this)->template backprojectRightImpl<T>(p);
+        }
+
+        template<typename T>
+        Sophus::SE3<T> getRelativeMotion() const {
+            return static_cast<TDerived *>(this)->template getRelativeMotionImpl();
         }
 
 
