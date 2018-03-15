@@ -13,9 +13,8 @@ namespace scene {
     /**
      * @brief Base class for camera
      * @tparam TDerived --- CRTP
-     * @tparam TIntrinsics --- Intrinsics model
      */
-    template<typename TDerived, typename TIntrinsics>
+    template<typename TDerived>
     struct ICamera {
 
         /**

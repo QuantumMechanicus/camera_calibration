@@ -12,12 +12,17 @@
 #include <sophus/se3.hpp>
 #include <boost/math/special_functions/erf.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <ceres/ceres.h>
 #include <tbb/tbb.h>
 #include <glog/logging.h>
 #include <fstream>
 #include <memory>
 #include <map>
+#include <utility>
+#include <regex>
+#include <fstream>
+#include <random>
 
 namespace scene {
     template<typename T>
