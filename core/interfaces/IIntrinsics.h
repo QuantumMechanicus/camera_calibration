@@ -18,7 +18,7 @@ namespace intrinsics {
     protected:
         unsigned int w_;
         unsigned int h_;
-
+        unsigned double r_;
 
     public:
         /**
@@ -26,8 +26,8 @@ namespace intrinsics {
          * @param w Width of the image
          * @param h Height of the image
          */
-        explicit AbstractIntrinsics(unsigned int w = 0, unsigned int h = 0) : w_(w), h_(h) {};
-
+        explicit AbstractIntrinsics(unsigned int w = 0, unsigned int h = 0) : w_(w), h_(h),
+                                                                              r_(std::sqrt(w * w + h * h) / 2.0) {};
 
         /**
         * @brief Method for identifying unknown parameters of model
@@ -38,10 +38,42 @@ namespace intrinsics {
             static_cast<TDerived *>(this)->estimateParameterImpl(estimator);
         }
 
-        Eigen::Vector2d undistort(const Eigen::Vector2d &p)
-        {
-            return static_cast<TDerived *>(this)->undistortImpl(p);
+        /***
+         * @brief Applies undistortion transform
+         * @param ud Image point with distortion
+         * @return undistorted image point
+         */
+        scene::ImagePoint undistort(const scene::ImagePoint &pd) {
+            return static_cast<TDerived *>(this)->undistortImpl(pd);
         }
+
+        /***
+         * @brief Applies distortion transform
+         * @param ud Image point without distortion
+         * @return distorted image point
+         */
+        scene::ImagePoint distort(const scene::ImagePoint &p) {
+            return static_cast<TDerived *>(this)->distortImpl(p);
+        }
+
+        /***
+         * @brief Project world point to undistorted image space
+         * @param wp Point in 3D world space
+         * @return appropriate image point
+         */
+        scene::ImagePoint project(const scene::WorldPoint &wp) {
+            return static_cast<TDerived *>(this)->projectImpl(wp);
+        }
+
+        /***
+         * @brief Backproject image point to correspondent ray in 3D space
+         * @param p Point in undistorted image space
+         * @return appropriate ray
+         */
+        scene::HomogenousWorldPoint backproject(const scene::ImagePoint &p) {
+            return static_cast<TDerived *>(this)->backprojectImpl(p);
+        }
+
 
         /**
          * @brief Getter for width of the image
@@ -57,6 +89,15 @@ namespace intrinsics {
          */
         unsigned int getHeight() const {
             return h_;
+        }
+
+        /***
+         * @brief Getter for radius of the image
+         * @return radius of the image
+         */
+        unsigned double getImageRadius() const
+        {
+            return r_;
         }
 
         /**

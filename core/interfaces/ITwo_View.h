@@ -16,6 +16,7 @@ namespace scene {
     template<typename TDerived>
     struct ITwoView {
     public:
+
         //TODO forward
         /**
          * @brief Estimate fundamental matrix via estimator
@@ -35,7 +36,7 @@ namespace scene {
         }
 
         /**
-         * @brief Estimate any parameter of left camera (e.g. intrinsics, extrinsic), see implementation for details
+         * @brief Estimate any parameter of right camera (e.g. intrinsics, extrinsic), see implementation for details
          */
         template <typename TEstimator>
         void estimateRightCamera(TEstimator &estimator) {
