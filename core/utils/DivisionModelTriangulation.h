@@ -13,6 +13,7 @@ namespace utils {
                                         const Eigen::Vector3d &dirLeft,
                                         const Eigen::Vector3d &dirRight);
 
+
     template<typename TStereoPair>
     double pointsOnCurves(const TStereoPair &stereo_pair,
                           const scene::ImagePoint &distorted_left, const scene::ImagePoint &distorted_right,
@@ -31,7 +32,7 @@ namespace utils {
                      const scene::ImagePoint &right_keypoint,
                      scene::HomogeneousWorldPoint &left_backprojected,
                      scene::HomogeneousWorldPoint &right_backprojected,
-                     double *reproj_error) {
+                     double *reproj_error = nullptr) {
 
         Eigen::Matrix3d left_calibration = stereo_pair.getLeftCalibrationMatrix();
         Eigen::Matrix3d right_calibration = stereo_pair.getRightCalibrationMatrix();
@@ -122,6 +123,17 @@ namespace utils {
 
     }
 
+    template<typename TStereoPair>
+    bool chiralityTest(const TStereoPair &stereo_pair,
+                       const scene::ImagePoint &left_keypoint, const scene::ImagePoint &right_keypoint,
+                       double *reproj_error = nullptr) {
+
+        scene::HomogeneousWorldPoint left_backprojected, right_backprojected;
+        triangulate(stereo_pair, left_keypoint, right_keypoint, left_backprojected, right_backprojected, reproj_error);
+        bool c1 = left_backprojected[2] * left_backprojected[3] > 0;
+        bool c2 = right_backprojected[2] * right_backprojected[3] > 0;
+        return (c1 && c2);
+    }
 
 }
 
