@@ -4,7 +4,8 @@ FIND_PACKAGE(Glog REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 
 include_directories(submodules/Sophus)
-add_library(core STATIC interfaces/tt.cpp
+add_library(core STATIC utils/Utilities.cpp
+        utils/Utilities.h
         interfaces/Abstract_Estimator.h
         interfaces/ICamera.h
         interfaces/IEdge.h
