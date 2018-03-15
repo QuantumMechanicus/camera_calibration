@@ -18,7 +18,7 @@ namespace intrinsics {
     protected:
         unsigned int w_;
         unsigned int h_;
-        unsigned double r_;
+        double r_;
 
     public:
         /**
@@ -43,8 +43,9 @@ namespace intrinsics {
          * @param ud Image point with distortion
          * @return undistorted image point
          */
-        scene::ImagePoint undistort(const scene::ImagePoint &pd) {
-            return static_cast<TDerived *>(this)->undistortImpl(pd);
+        template <typename T>
+        scene::TImagePoint<T> undistort(const scene::TImagePoint<T> &pd) {
+            return static_cast<TDerived *>(this)->undistortImpl<T>(pd);
         }
 
         /***
@@ -52,8 +53,9 @@ namespace intrinsics {
          * @param ud Image point without distortion
          * @return distorted image point
          */
-        scene::ImagePoint distort(const scene::ImagePoint &p) {
-            return static_cast<TDerived *>(this)->distortImpl(p);
+        template <typename T>
+        scene::TImagePoint<T> distort(const scene::TImagePoint<T> &p) {
+            return static_cast<TDerived *>(this)->distortImpl<T>(p);
         }
 
         /***
@@ -61,8 +63,9 @@ namespace intrinsics {
          * @param wp Point in 3D world space
          * @return appropriate image point
          */
-        scene::ImagePoint project(const scene::WorldPoint &wp) {
-            return static_cast<TDerived *>(this)->projectImpl(wp);
+        template <typename T>
+        scene::TImagePoint<T> project(const scene::TWorldPoint<T> &wp) {
+            return static_cast<TDerived *>(this)->projectImpl<T>(wp);
         }
 
         /***
@@ -70,8 +73,9 @@ namespace intrinsics {
          * @param p Point in undistorted image space
          * @return appropriate ray
          */
-        scene::HomogenousWorldPoint backproject(const scene::ImagePoint &p) {
-            return static_cast<TDerived *>(this)->backprojectImpl(p);
+        template <typename T>
+        scene::THomogeneousWorldPoint<T> backproject(const scene::TImagePoint<T> &p) {
+            return static_cast<TDerived *>(this)->backprojectImpl<T>(p);
         }
 
 
@@ -95,7 +99,7 @@ namespace intrinsics {
          * @brief Getter for radius of the image
          * @return radius of the image
          */
-        unsigned double getImageRadius() const
+        double getImageRadius() const
         {
             return r_;
         }

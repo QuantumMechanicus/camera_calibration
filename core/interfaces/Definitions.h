@@ -7,12 +7,14 @@
 
 
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <sophus/so3.hpp>
 #include <sophus/se3.hpp>
-#include <glog/logging.h>
 #include <boost/math/special_functions/erf.hpp>
 #include <boost/filesystem.hpp>
 #include <ceres/ceres.h>
+#include <tbb/tbb.h>
+#include <glog/logging.h>
 #include <fstream>
 #include <memory>
 #include <map>
@@ -21,6 +23,9 @@ namespace scene {
     template<typename T>
     using StdVector = std::vector<T, Eigen::aligned_allocator<T>>;
 
+    template<typename K, typename V>
+    using StdMap = std::map<K, V, std::less<K>, Eigen::aligned_allocator<std::pair<const K, V> > >;
+
     template<typename T>
     using TImagePoint = Eigen::Matrix<T, 2, 1>;
 
@@ -28,10 +33,24 @@ namespace scene {
     using TImagePoints = Eigen::Matrix<T, 2, Eigen::Dynamic>;
 
     template<typename T>
+    using TWorldPoint = Eigen::Matrix<T, 3, 1>;
+
+    template<typename T>
+    using TWorldPoints = Eigen::Matrix<T, 3, Eigen::Dynamic>;
+
+
+    template<typename T>
+    using THomogeneousWorldPoint = Eigen::Matrix<T, 4, 1>;
+
+    template<typename T>
     using THomogenousImagePoint = Eigen::Matrix<T, 3, 1>;
 
     template<typename T>
+    using THomogeneousWorldPoints = Eigen::Matrix<T, 4, Eigen::Dynamic>;
+
+    template<typename T>
     using THomogenousImagePoints = Eigen::Matrix<T, 3, Eigen::Dynamic>;
+
 
     template<typename T>
     using TFundamentalMatrix = Eigen::Matrix<T, 3, 3>;

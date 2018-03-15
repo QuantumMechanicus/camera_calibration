@@ -50,7 +50,7 @@ namespace scene {
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::HomogenousWorldPoint backproject(const scene::ImagePoint &p) {
+        scene::HomogeneousWorldPoint backproject(const scene::ImagePoint &p) {
             return static_cast<TDerived *>(this)->backprojectImpl(p);
         }
     };
