@@ -148,15 +148,18 @@ namespace utils {
                        std::vector<T> &right_residuals, T image_r = T(1.0)) {
 
 
-        auto number_of_points = stereo_pair->getNumberOfPoints();
+        auto number_of_points = stereo_pair.getNumberOfPoints();
 
         left_residuals.resize(number_of_points, T(std::numeric_limits<double>::max()));
         right_residuals.resize(number_of_points, T(std::numeric_limits<double>::max()));
+        auto const &u1d = stereo_pair.getLeftKeypoints();
+        auto const &u2d = stereo_pair.getRightKeypoints();
+
         for (size_t k = 0; k < number_of_points; ++k) {
 
             ErrorFunctor<TStereoPair> cost;
             T left_residual, right_residual;
-            bool is_correct = cost(stereo_pair, left_residual, right_residual);
+            bool is_correct = cost(u1d.col(k).eval(), u2d.col(k).eval(), stereo_pair, left_residual, right_residual);
             left_residuals[k] = image_r * left_residual;
             right_residuals[k] = image_r * right_residual;
         }

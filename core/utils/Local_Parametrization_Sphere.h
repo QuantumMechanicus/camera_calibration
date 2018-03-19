@@ -5,7 +5,8 @@
 #ifndef CAMERA_CALIBRATION_LOCAL_PARAMETRIZATION_SPHERE_H
 #define CAMERA_CALIBRATION_LOCAL_PARAMETRIZATION_SPHERE_H
 #include <ceres/local_parameterization.h>
-#include "Eigen/Dense"
+#include <Eigen/Dense>
+
 namespace local_parametrization {
     class LocalParameterizationSphere : public ceres::LocalParameterization {
     private:

@@ -26,8 +26,8 @@ namespace functors {
             Eigen::Matrix<T, 2, 1> line_point1, line_point2;
 
 
-            Eigen::Matrix<T, 3, 1> l2 = stereo_pair.getRightEpiline(u1);
-            Eigen::Matrix<T, 3, 1> l1 = stereo_pair.getLeftEpiline(u1);
+            Eigen::Matrix<T, 3, 1> l2 = stereo_pair.template getRightEpiline<T>(u1);
+            Eigen::Matrix<T, 3, 1> l1 = stereo_pair.template getLeftEpiline<T>(u2);
 
             T n1 = l1.template block<2, 1>(0, 0).norm();
             T n2 = l2.template block<2, 1>(0, 0).norm();

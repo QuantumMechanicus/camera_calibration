@@ -66,13 +66,43 @@ namespace scene {
             return bifocal_tensor_;
         }
 
-        const FundamentalMatrix getEssentialMatrixImpl() {
+        const FundamentalMatrix getEssentialMatrixImpl() const {
 
             auto left_K = getLeftIntrinsicsPointer()->getCalibrationMatrix();
             auto right_K = getRightIntrinsicsPointer()->getCalibrationMatrix();
 
 
             return right_K.transpose() * bifocal_tensor_ * left_K;
+        }
+
+        template <typename T>
+        const Eigen::Vector3d getLeftEpilineImpl(const scene::TImagePoint<T> &u) const {
+            return bifocal_tensor_.template cast<T>() * u.homogeneous();
+        }
+
+        template <typename T>
+        const Eigen::Vector3d getRightEpilineImpl(const scene::TImagePoint<T> &u) const {
+            return bifocal_tensor_.template cast<T>().transpose() * u.homogeneous();
+        }
+
+        template<typename T>
+        scene::TImagePoint<T> undistortLeftImpl(const scene::TImagePoint<T> &pd) const {
+            return getLeftIntrinsicsPointer()->undistort(pd);
+        }
+
+        template<typename T>
+        scene::TImagePoint<T>undistortRightImpl(const scene::TImagePoint<T> &pd) const {
+            return getRightIntrinsicsPointer()->undistort(pd);
+        }
+
+        template<typename T>
+        scene::TImagePoint<T> distortLeftImpl(const scene::TImagePoint<T> &pd) const {
+            return getLeftIntrinsicsPointer()->distort(pd);
+        }
+
+        template<typename T>
+        scene::TImagePoint<T>distortRightImpl(const scene::TImagePoint<T> &pd) const {
+            return getRightIntrinsicsPointer()->distort(pd);
         }
 
     public:

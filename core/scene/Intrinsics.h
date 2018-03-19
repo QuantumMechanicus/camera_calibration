@@ -58,6 +58,11 @@ namespace intrinsics {
             *this = estimator;
         }
 
+        void estimateParameterImpl(Eigen::Matrix<double, 1, N> &estimator) {
+
+            lambdas_ = estimator;
+        }
+
         void estimateParameterImpl(estimators::AbstractEstimator<Eigen::Matrix<double, 1, N>> &estimator) {
 
             lambdas_ = estimator.getEstimation();
@@ -69,12 +74,12 @@ namespace intrinsics {
         }
 
         template<typename T>
-        scene::TImagePoint<T> undistortImpl(const scene::TImagePoint<T> &p) {
+        scene::TImagePoint<T> undistortImpl(const scene::TImagePoint<T> &p) const {
             return utils::division_model::undistortion<T>(p, lambdas_.template cast<T>());
         }
 
         template<typename T>
-        scene::TImagePoint<T> distortImpl(const scene::TImagePoint<T> &p) {
+        scene::TImagePoint<T> distortImpl(const scene::TImagePoint<T> &p) const {
             return utils::division_model::distortion<T>(p, lambdas_.template cast<T>());
         }
 

@@ -58,7 +58,7 @@ namespace intrinsics {
          */
         template<typename T>
         scene::TImagePoint<T> undistort(const scene::TImagePoint<T> &pd) const {
-            return static_cast<TDerived *>(this)->template undistortImpl<T>(pd);
+            return static_cast<const TDerived *>(this)->template undistortImpl<T>(pd);
         }
         /***
          * @brief Applies distortion transform
@@ -67,7 +67,7 @@ namespace intrinsics {
          */
         template<typename T>
         scene::TImagePoint<T> distort(const scene::TImagePoint<T> &p) const {
-            return static_cast<TDerived *>(this)->template distortImpl<T>(p);
+            return static_cast<const TDerived *>(this)->template distortImpl<T>(p);
         }
 
         /***
@@ -77,7 +77,7 @@ namespace intrinsics {
          */
         template<typename T>
         scene::TImagePoint<T> project(const scene::TWorldPoint<T> &wp) const {
-            return static_cast<TDerived *>(this)->template projectImpl<T>(wp);
+            return static_cast<const TDerived *>(this)->template projectImpl<T>(wp);
         }
 
         /***
@@ -87,7 +87,7 @@ namespace intrinsics {
          */
         template<typename T>
         scene::THomogeneousImagePoint<T> backproject(const scene::TImagePoint<T> &p) const {
-            return static_cast<TDerived *>(this)->template backprojectImpl<T>(p);
+            return static_cast<const TDerived *>(this)->template backprojectImpl<T>(p);
         }
 
         /***
@@ -97,7 +97,7 @@ namespace intrinsics {
          */
         double getFieldOfView(FieldOfViewType t)
         {
-            return static_cast<TDerived *>(this)->getFieldOfViewImpl(t);
+            return static_cast<const TDerived *>(this)->getFieldOfViewImpl(t);
         }
 
 

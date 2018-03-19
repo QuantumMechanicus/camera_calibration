@@ -88,9 +88,11 @@ namespace scene {
         Camera(TLabel label, TIntrinsicsModel intrinsics, const Sophus::SO3d &rotation,
                const Eigen::Vector3d &translation) : label_(std::move(label)),
                                                      intrinsics_(std::allocate_shared<TIntrinsicsModel>(
-                                                             Eigen::aligned_allocator<intrinsics>())),
+                                                             Eigen::aligned_allocator<TIntrinsicsModel>())),
                                                      world_rotation_(rotation),
-                                                     world_translation_(translation) {}
+                                                     world_translation_(translation) {
+            *intrinsics_ = intrinsics;
+        }
 
 
         /**

@@ -24,13 +24,15 @@ set(CORE_HEADERS
         scene/Camera.h
         scene/Intrinsics.h
         scene/Two_View.h
-        scene/Scene.h)
+        scene/Scene.h include/Core.h)
 
 
 add_library(core STATIC ${CORE_HEADERS})
 
 target_include_directories(core PUBLIC ${CERES_LIBRARIES} ${Boost_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/interfaces
         ${CMAKE_CURRENT_SOURCE_DIR}/utils
+        ${CMAKE_CURRENT_SOURCE_DIR}/scene
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/submodules/Sophus)
 
 target_link_libraries(core PUBLIC ${Boost_LIBRARIES} ${CERES_LIBRARIES} ${GLOG_LIBRARIES})

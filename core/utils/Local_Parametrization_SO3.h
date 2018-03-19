@@ -5,8 +5,8 @@
 #ifndef CAMERA_CALIBRATION_LOCAL_PARAMETRIZATION_SO3_H
 #define CAMERA_CALIBRATION_LOCAL_PARAMETRIZATION_SO3_H
 
-#include "ceres/local_parameterization.h"
-#include "Sophus/sophus/so3.hpp"
+#include <ceres/local_parameterization.h>
+#include <sophus/so3.hpp>
 
 namespace local_parametrization {
 
@@ -34,8 +34,10 @@ namespace local_parametrization {
         bool ComputeJacobian(double const *T_raw,
                              double *jacobian_raw) const final {
             Eigen::Map<Sophus::SO3d const> T(T_raw);
+
             Eigen::Map<Eigen::Matrix<double, Sophus::SO3d::DoF, Sophus::SO3d::num_parameters> > jacobian(jacobian_raw);
-            jacobian = T.internalJacobian().transpose();
+
+            jacobian = T.Dx_this_mul_exp_x_at_0();
             return true;
         }
 

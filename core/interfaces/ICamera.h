@@ -28,29 +28,29 @@ namespace scene {
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::ImagePoint undistort(const scene::ImagePoint &pd) {
-            return static_cast<TDerived *>(this)->undistortImpl(pd);
+        scene::ImagePoint undistort(const scene::ImagePoint &pd) const {
+            return static_cast<const TDerived *>(this)->undistortImpl(pd);
         }
 
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::ImagePoint distort(const scene::ImagePoint &p) {
-            return static_cast<TDerived *>(this)->distortImpl(p);
+        scene::ImagePoint distort(const scene::ImagePoint &p) const {
+            return static_cast<const TDerived *>(this)->distortImpl(p);
         }
 
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::ImagePoint project(const scene::WorldPoint &wp) {
-            return static_cast<TDerived *>(this)->projectImpl(wp);
+        scene::ImagePoint project(const scene::WorldPoint &wp) const {
+            return static_cast<const TDerived *>(this)->projectImpl(wp);
         }
 
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::HomogeneousWorldPoint backproject(const scene::ImagePoint &p) {
-            return static_cast<TDerived *>(this)->backprojectImpl(p);
+        scene::HomogeneousWorldPoint backproject(const scene::ImagePoint &p) const {
+            return static_cast<const TDerived *>(this)->backprojectImpl(p);
         }
     };
 }

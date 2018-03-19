@@ -18,16 +18,17 @@ namespace scene_serialization {
     const static int CompileTimeKnown = -1;
 
     struct SceneFiles {
+        std::string left_camera_info_file_name_;
+        std::string right_camera_info_file_name_;
+        std::string relative_motion_file_name_;
         std::string left_keypoints_file_name_;
         std::string right_keypoints_file_name_;
-        std::string relative_motion_file_name_;
         std::string left_intrinsics_parameters_file_name_;
         std::string right_intrinsics_parameters_file_name_;
         std::string left_extrinsics_parameters_file_name_;
         std::string right_extrinsics_parameters_file_name_;
         std::string fundamental_matrix_file_name_;
-        std::string left_camera_info_file_name_;
-        std::string right_camera_info_file_name_;
+
 
         const static std::regex rgx_left_keypoints;
 
