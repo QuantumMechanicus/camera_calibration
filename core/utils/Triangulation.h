@@ -5,13 +5,13 @@
 #ifndef CAMERA_CALIBRATION_DIVISIONMODELTRIANGULATION_H
 #define CAMERA_CALIBRATION_DIVISIONMODELTRIANGULATION_H
 
-#include "DivisionModelFunctors.h"
+#include "Functors.h"
 
 namespace utils {
 
     inline scene::WorldPoint baseTriangulation(const Sophus::SE3d &leftToRight,
-                                        const Eigen::Vector3d &dirLeft,
-                                        const Eigen::Vector3d &dirRight) {
+                                               const Eigen::Vector3d &dirLeft,
+                                               const Eigen::Vector3d &dirRight) {
         Eigen::Vector3d dir_left = (leftToRight.so3() * dirLeft).normalized(),
                 dir_right = dirRight.normalized(),
                 t = leftToRight.translation();
@@ -22,7 +22,6 @@ namespace utils {
         Eigen::Vector2d alphas = A.fullPivHouseholderQr().solve(b);
         return (alphas[0] * dir_left + t + alphas[1] * dir_right) / 2.0;
     }
-
 
 
     template<typename TStereoPair>
@@ -144,6 +143,92 @@ namespace utils {
         bool c1 = left_backprojected[2] * left_backprojected[3] > 0;
         bool c2 = right_backprojected[2] * right_backprojected[3] > 0;
         return (c1 && c2);
+    }
+
+    template<typename TStereoPair>
+    double findChiralityInliers(const TStereoPair &stereo_pair,
+                       double expected_percent_of_inliers,
+                       std::vector<size_t> &inliers_indices, double image_r) {
+
+        scene::ImagePoints u1d = stereo_pair->getLeftKeyPoints();
+        scene::ImagePoints u2d = stereo_pair->getRightKeyPoints();
+
+        Sophus::SE3d leftToRight = stereo_pair->getRelativeMotion();
+        Eigen::Matrix3d calibration = stereo_pair->getCalibrationMatrix();
+
+        Eigen::Matrix3d translation_matrix = screw_hat(
+                leftToRight.translation()), rotation_matrix = leftToRight.so3().matrix();
+        Eigen::Matrix3d fundamental_matrix =
+                calibration.inverse().transpose() * translation_matrix * rotation_matrix * calibration.inverse();
+
+
+        std::vector<double> errors(u1d.cols());
+
+        tbb::parallel_for(tbb::blocked_range<int>(0, u1d.cols()),
+                          [&](auto range) {
+                              for (int i = range.begin(); i != range.end(); ++i) {
+
+                                  double err = std::numeric_limits<double>::max();
+
+                                  chiralityTest(stereo_pair, stereo_pair->undistortLeft(u1d.col(i)),
+                                                stereo_pair->undistortRight(u2d.col(i)), &err) ? 1 : 0;
+
+                                  double px_err = err * image_r;
+                                  errors[i] = px_err;
+                              }
+
+                          }
+        );
+
+        double quantile = estimateQuantile(errors, expected_percent_of_inliers);
+        double interval = estimateConfidenceInterval(quantile, expected_percent_of_inliers);
+        inliers_indices.clear();
+
+        std::atomic<int> invalid_threshold(0), invalid_chirality(0), invalid_reprojection_threshold(0);
+
+        std::vector<int> validity(u1d.cols());
+
+
+        tbb::parallel_for(tbb::blocked_range<int>(0, u1d.cols()),
+                          [&](auto range) {
+                              for (int i = range.begin(); i != range.end(); ++i) {
+
+                                  if (errors[i] >= interval) {
+                                      validity[i] = 0;
+                                      ++invalid_threshold;
+                                      continue;
+                                  }
+                                  double err = std::numeric_limits<double>::max();
+                                  validity[i] = chiralityTest(stereo_pair, stereo_pair->undistortLeft(u1d.col(i)),
+                                                              stereo_pair->undistortRight(u2d.col(i)), &err) ? 1 : 0;
+
+                                  double px_err = err * image_r;
+                                  if (!validity[i]) {
+                                      ++invalid_chirality;
+                                  }
+
+                                  if (px_err > interval * 5.0) {
+                                      validity[i] = 0;
+                                      ++invalid_reprojection_threshold;
+                                      LOG(WARNING) << "Expected error: " << interval << " observed error: " << px_err;
+                                      continue;
+                                  }
+                                  LOG(INFO) << "Reprojection error: " << px_err;
+                              }
+
+                          }
+        );
+
+
+        for (size_t k = 0; k < u1d.cols(); ++k) {
+            if (validity[k]) {
+                inliers_indices.push_back(k);
+            }
+        }
+        LOG(INFO) << "Inliers: " << inliers_indices.size() << " [out of: " << u1d.cols() << "]; " << invalid_threshold
+                  << "/" << invalid_chirality << "/" << invalid_reprojection_threshold << " thresh/chir/repr";
+        return interval;
+
     }
 
 }

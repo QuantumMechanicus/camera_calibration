@@ -10,7 +10,6 @@
 #include <Eigen/StdVector>
 #include <sophus/so3.hpp>
 #include <sophus/se3.hpp>
-#include <boost/math/special_functions/erf.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <ceres/ceres.h>
@@ -23,6 +22,7 @@
 #include <regex>
 #include <fstream>
 #include <random>
+#include <atomic>
 
 namespace scene {
     template<typename T>

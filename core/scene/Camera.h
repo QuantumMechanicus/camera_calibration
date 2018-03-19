@@ -5,9 +5,9 @@
 #ifndef CAMERA_CALIBRATION_CAMERA_H
 #define CAMERA_CALIBRATION_CAMERA_H
 
-#include <Intrinsics.h>
 #include <ICamera.h>
 #include <INode.h>
+#include "Intrinsics.h"
 
 namespace scene {
     /**
@@ -20,6 +20,7 @@ namespace scene {
               public graph::INode<Camera<TIntrinsicsModel, TLabel>, TLabel> {
 
         friend class ICamera<Camera<TIntrinsicsModel, TLabel>>;
+
         friend graph::INode<Camera<TIntrinsicsModel, TLabel>, TLabel>;
 
         std::shared_ptr<TIntrinsicsModel> intrinsics_;
@@ -50,14 +51,12 @@ namespace scene {
 
     public:
 
-
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         using Model_t = TIntrinsicsModel;
 
-
-
         Camera() : world_rotation_{}, world_translation_{}, label_{} {
-            intrinsics_ = std::make_shared<TIntrinsicsModel>(TIntrinsicsModel());
+            intrinsics_ = std::allocate_shared<TIntrinsicsModel>(Eigen::aligned_allocator<TIntrinsicsModel>());
         }
 
         Camera(Camera &&rhs) noexcept = default;
@@ -74,10 +73,10 @@ namespace scene {
          * @param rotation  Rotation element R of transform from world coordinates to local camera coordinates
          * @param translation Translation element t of transform from world coordinates to local camera coordinates
          */
-        Camera(TLabel label, std::shared_ptr<TIntrinsicsModel> intrinsics, Sophus::SO3d rotation,
-               Eigen::Vector3d translation) : label_(std::move(label)), intrinsics_(std::move(intrinsics)),
-                                              world_rotation_(std::move(rotation)),
-                                              world_translation_(std::move(translation)) {}
+        Camera(TLabel label, std::shared_ptr<TIntrinsicsModel> intrinsics, const Sophus::SO3d &rotation,
+               const Eigen::Vector3d &translation) : label_(std::move(label)), intrinsics_(std::move(intrinsics)),
+                                                     world_rotation_(rotation),
+                                                     world_translation_(translation) {}
 
 
         /**
@@ -86,11 +85,12 @@ namespace scene {
          * @param rotation  Rotation element R of transform from world coordinates to local camera coordinates
          * @param translation Translation element t of transform from world coordinates to local camera coordinates
          */
-        Camera(TLabel label, TIntrinsicsModel intrinsics, Sophus::SO3d rotation,
-               Eigen::Vector3d translation) : label_(std::move(label)),
-                                              intrinsics_(std::make_shared<TIntrinsicsModel>(intrinsics)),
-                                              world_rotation_(std::move(rotation)),
-                                              world_translation_(std::move(translation)) {}
+        Camera(TLabel label, TIntrinsicsModel intrinsics, const Sophus::SO3d &rotation,
+               const Eigen::Vector3d &translation) : label_(std::move(label)),
+                                                     intrinsics_(std::allocate_shared<TIntrinsicsModel>(
+                                                             Eigen::aligned_allocator<intrinsics>())),
+                                                     world_rotation_(rotation),
+                                                     world_translation_(translation) {}
 
 
         /**
@@ -171,9 +171,9 @@ namespace scene {
 
     };
 
-    using DynamicDivisionModelCamera = Camera<intrinsics::DynamicDivisionModel >;
+    using DynamicDivisionModelCamera = Camera<intrinsics::DynamicDivisionModel>;
     using StandartDivisionModelCamera = Camera<intrinsics::StandardDivisionModel>;
-    using PinholeCamera = Camera<intrinsics::PinholeModel >;
+    using PinholeCamera = Camera<intrinsics::PinholeModel>;
 
 }
 #endif //CAMERA_CALIBRATION_CAMERA_H

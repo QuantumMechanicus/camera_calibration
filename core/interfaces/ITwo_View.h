@@ -87,6 +87,26 @@ namespace scene {
             return static_cast<TDerived *>(this)->template getRelativeMotionImpl();
         }
 
+        long getNumberOfPoints() const {
+            return static_cast<TDerived *>(this)->getNumberOfPointsImpl();
+        }
+
+        const ImagePoints &getLeftKeypoints() const {
+            return static_cast<TDerived *>(this)->getLeftKeypoints();
+        }
+
+        const ImagePoints &getRightKeypoints() const {
+            return static_cast<TDerived *>(this)->getRightKeypoints();
+        }
+
+        const FundamentalMatrix &getFundamentalMatrix() const {
+            return static_cast<TDerived *>(this)->getFundamentalMatrixImpl();
+        }
+
+        const FundamentalMatrix getEssentialMatrix() {
+            return static_cast<TDerived *>(this)->getEssentialMatrixImpl();
+        }
+
 
     };
 

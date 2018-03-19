@@ -95,5 +95,31 @@ namespace functors {
             return true;
         }
     };
+
+    struct costEssentialFunctor {
+        Eigen::Matrix3d fundamental_matrix;
+
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        explicit costEssentialFunctor(const Eigen::Matrix3d &f) : fundamental_matrix(f) {}
+
+        template<typename T>
+        bool operator()(const T *f_ptr, const T *cx_ptr, const T *cy_ptr, T *residuals) const {
+            Eigen::Matrix<T, 3, 3> K;
+            K.setIdentity();
+            K(0, 0) = K(1, 1) = *f_ptr;
+            K(0, 2) = *cx_ptr;
+            K(1, 2) = *cy_ptr;
+            auto essential_matrix = (K.transpose() * fundamental_matrix.template cast<T>() * K).eval();
+
+            Eigen::Map<Eigen::Matrix<T, 3, 3> > e(residuals);
+
+            e = ((essential_matrix * essential_matrix.transpose() * essential_matrix
+                  - 0.5 * (essential_matrix * essential_matrix.transpose()).trace() * essential_matrix) /
+                 ceres::pow(essential_matrix.norm(), 3));
+            return *f_ptr > T(0.0);
+
+        }
+    };
 }
 #endif //CAMERA_CALIBRATION_DIVISIONMODELFUNCTORS_H

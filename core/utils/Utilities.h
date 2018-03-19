@@ -5,6 +5,7 @@
 #ifndef CAMERA_CALIBRATION_UTILITIES_H
 #define CAMERA_CALIBRATION_UTILITIES_H
 
+#include <boost/math/special_functions/erf.hpp>
 #include <IScene.h>
 
 namespace utils {
@@ -141,6 +142,59 @@ namespace utils {
         t << t_hat(2, 1), t_hat(0, 2), t_hat(1, 0);
         return t;
     }
+
+    template<template<typename> class ErrorFunctor, typename TStereoPair, typename T>
+    void computeErrors(const TStereoPair &stereo_pair, std::vector<T> &left_residuals,
+                       std::vector<T> &right_residuals, T image_r = T(1.0)) {
+
+
+        auto number_of_points = stereo_pair->getNumberOfPoints();
+
+        left_residuals.resize(number_of_points, T(std::numeric_limits<double>::max()));
+        right_residuals.resize(number_of_points, T(std::numeric_limits<double>::max()));
+        for (size_t k = 0; k < number_of_points; ++k) {
+
+            ErrorFunctor<TStereoPair> cost;
+            T left_residual, right_residual;
+            bool is_correct = cost(stereo_pair, left_residual, right_residual);
+            left_residuals[k] = image_r * left_residual;
+            right_residuals[k] = image_r * right_residual;
+        }
+    }
+
+    double estimateQuantile(std::vector<double> errors,
+                            double expected_percent_of_inliers);
+
+    double estimateConfidenceInterval(double quantile, double expected_percent_of_inliers);
+
+
+    template<template<typename> class ErrorFunctor, typename TStereoPair>
+    double findInliers(const TStereoPair &stereo_pair, double expected_percent_of_inliers,
+                       std::vector<size_t> &inliers_indices, double image_r) {
+
+        std::vector<double> left_residuals, right_residuals, errors(
+                static_cast<unsigned long>(stereo_pair.getNumberOfPoints()));
+
+        utils::computeErrors<ErrorFunctor<TStereoPair>, TStereoPair, double>(stereo_pair,
+                                                                             left_residuals,
+                                                                             right_residuals,
+                                                                             image_r);
+        for (std::size_t k = 0; k < errors.size(); ++k) {
+            errors[k] = std::abs(left_residuals[k]) + std::abs(right_residuals[k]);
+        }
+        double quantile = estimateQuantile(errors, expected_percent_of_inliers);
+        double interval = estimateConfidenceInterval(quantile, expected_percent_of_inliers);
+        inliers_indices.resize(0);
+
+        for (size_t k = 0; k < errors.size(); ++k) {
+            if (errors[k] < interval) {
+                inliers_indices.push_back(k);
+            }
+        }
+        return interval;
+
+    }
+
 
 }
 #endif //CAMERA_CALIBRATION_UTILITIES_H

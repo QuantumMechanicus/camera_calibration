@@ -5,8 +5,9 @@
 #ifndef CAMERA_CALIBRATION_SCENE_H
 #define CAMERA_CALIBRATION_SCENE_H
 
+#include <IScene.h>
 #include "Two_View.h"
-#include "../interfaces/IScene.h"
+
 
 namespace scene {
 
@@ -15,7 +16,7 @@ namespace scene {
         friend class IScene<Scene<TCamera, TTwoView>>;
 
         std::shared_ptr<typename TTwoView::VertexMap_t> ptr_to_map_;
-        std::vector<TTwoView> list_of_stereo_pairs_;
+        scene::StdVector<TTwoView> list_of_stereo_pairs_;
         //TODO approve TwoViews ptr_to_map and scene ptr_to_map
 
     protected:
@@ -54,6 +55,8 @@ namespace scene {
 
     public:
 
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         using Camera_t = TCamera;
 
         Scene() = default;
@@ -72,7 +75,7 @@ namespace scene {
         template<typename SceneArchiver>
         void loadScene(const std::vector<SceneArchiver> &serializators,
                        std::shared_ptr<typename TTwoView::VertexMap_t> ptr_to_map) {
-            ptr_to_map_ = ptr_to_map_;
+            ptr_to_map_ = ptr_to_map;
             list_of_stereo_pairs_.resize(serializators.size());
             for (size_t k = 0; k < list_of_stereo_pairs_.size(); ++k)
                 serializators[k].deserialize(list_of_stereo_pairs_[k], ptr_to_map);
