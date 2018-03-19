@@ -17,6 +17,10 @@ set(CORE_HEADERS
         utils/DivisionModelUtilities.h
         utils/Functors.h
         utils/Triangulation.h
+        utils/Local_Parametrization_SO3.h
+        utils/Local_Parametrization_Sphere.h
+        utils/Scene_IO.h
+        utils/Scene_IO.cpp
         scene/Camera.h
         scene/Intrinsics.h
         scene/Two_View.h
