@@ -41,7 +41,7 @@ namespace graph {
          */
         typename TVertex::Label_t start_vertex_label_;
         typename TVertex::Label_t end_vertex_label_;
-        std::shared_ptr<std::map<typename TVertex::Label_t, TVertex>> ptr_to_list_of_vertices_{};
+        std::shared_ptr<scene::StdMap<typename TVertex::Label_t, TVertex>> ptr_to_list_of_vertices_{};
 
         const TVertex &getStartVertexImpl() const {
             return ptr_to_list_of_vertices_->at(start_vertex_label_);
@@ -54,10 +54,10 @@ namespace graph {
     public:
         using Vertex_t = TVertex;
         using Weight_t = TWeight;
-        using VertexMap_t = std::map<typename TVertex::Label_t, TVertex>;
+        using VertexMap_t = scene::StdMap<typename TVertex::Label_t, TVertex>;
 
         AbstractEdge() : start_vertex_label_{}, end_vertex_label_{} {
-            ptr_to_list_of_vertices_ = std::make_shared<VertexMap_t>(VertexMap_t());
+            ptr_to_list_of_vertices_ = std::allocate_shared<VertexMap_t>(Eigen::aligned_allocator<VertexMap_t>());
 
         }
 

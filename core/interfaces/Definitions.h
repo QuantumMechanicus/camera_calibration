@@ -48,14 +48,13 @@ namespace scene {
     using THomogeneousWorldPoint = Eigen::Matrix<T, 4, 1>;
 
     template<typename T>
-    using THomogenousImagePoint = Eigen::Matrix<T, 3, 1>;
+    using THomogeneousImagePoint = Eigen::Matrix<T, 3, 1>;
 
     template<typename T>
     using THomogeneousWorldPoints = Eigen::Matrix<T, 4, Eigen::Dynamic>;
 
     template<typename T>
-    using THomogenousImagePoints = Eigen::Matrix<T, 3, Eigen::Dynamic>;
-
+    using THomogeneousImagePoints = Eigen::Matrix<T, 3, Eigen::Dynamic>;
 
     template<typename T>
     using TFundamentalMatrix = Eigen::Matrix<T, 3, 3>;
@@ -66,15 +65,15 @@ namespace scene {
 
     typedef Eigen::Matrix<double, 4, 1> HomogeneousWorldPoint;
 
-    typedef Eigen::Matrix<double, 3, 1> HomogenousImagePoint;
+    typedef Eigen::Matrix<double, 3, 1> HomogeneousImagePoint;
 
     typedef Eigen::Matrix<double, 2, Eigen::Dynamic> ImagePoints;
 
     typedef Eigen::Matrix<double, 3, Eigen::Dynamic> WorldPoints;
 
-    typedef Eigen::Matrix<double, 3, Eigen::Dynamic> HomogenousImagePoints;
+    typedef Eigen::Matrix<double, 3, Eigen::Dynamic> HomogeneousImagePoints;
 
-    typedef Eigen::Matrix<double, 4, Eigen::Dynamic> HomogenousWorldPoints;
+    typedef Eigen::Matrix<double, 4, Eigen::Dynamic> HomogeneousWorldPoints;
 
     typedef Eigen::Matrix3d FundamentalMatrix;
 

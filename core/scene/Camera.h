@@ -5,13 +5,9 @@
 #ifndef CAMERA_CALIBRATION_CAMERA_H
 #define CAMERA_CALIBRATION_CAMERA_H
 
-#include <memory>
-#include <utility>
-#include "Sophus/sophus/so3.hpp"
-#include "Sophus/sophus/se3.hpp"
-#include "Intrinsics.h"
-#include "../interfaces/ICamera.h"
-#include "../interfaces/INode.h"
+#include <Intrinsics.h>
+#include <ICamera.h>
+#include <INode.h>
 
 namespace scene {
     /**
@@ -53,6 +49,8 @@ namespace scene {
 
 
     public:
+
+
 
         using Model_t = TIntrinsicsModel;
 

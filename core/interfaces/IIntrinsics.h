@@ -8,6 +8,19 @@
 #include <Abstract_Estimator.h>
 
 namespace intrinsics {
+
+    /***
+     * DFOV --- diagonal field of view
+     * HFOV --- horizontal field of view
+     * VFOV --- vertical field of view
+     */
+    enum FieldOfViewType{
+        DFOV,
+        HFOV,
+        VFOV,
+    };
+
+
     /**
      * @brief Base class to store intrinsic parameters of camera (e. g. width, height, focal length)
      * @tparam TDerived --- CRTP
@@ -43,18 +56,17 @@ namespace intrinsics {
          * @param ud Image point with distortion
          * @return undistorted image point
          */
-        template <typename T>
-        scene::TImagePoint<T> undistort(const scene::TImagePoint<T> &pd) {
+        template<typename T>
+        scene::TImagePoint<T> undistort(const scene::TImagePoint<T> &pd) const {
             return static_cast<TDerived *>(this)->template undistortImpl<T>(pd);
         }
-
         /***
          * @brief Applies distortion transform
          * @param ud Image point without distortion
          * @return distorted image point
          */
-        template <typename T>
-        scene::TImagePoint<T> distort(const scene::TImagePoint<T> &p) {
+        template<typename T>
+        scene::TImagePoint<T> distort(const scene::TImagePoint<T> &p) const {
             return static_cast<TDerived *>(this)->template distortImpl<T>(p);
         }
 
@@ -63,8 +75,8 @@ namespace intrinsics {
          * @param wp Point in 3D world space
          * @return appropriate image point
          */
-        template <typename T>
-        scene::TImagePoint<T> project(const scene::TWorldPoint<T> &wp) {
+        template<typename T>
+        scene::TImagePoint<T> project(const scene::TWorldPoint<T> &wp) const {
             return static_cast<TDerived *>(this)->template projectImpl<T>(wp);
         }
 
@@ -73,9 +85,19 @@ namespace intrinsics {
          * @param p Point in undistorted image space
          * @return appropriate ray
          */
-        template <typename T>
-        scene::THomogeneousWorldPoint<T> backproject(const scene::TImagePoint<T> &p) {
+        template<typename T>
+        scene::THomogeneousImagePoint<T> backproject(const scene::TImagePoint<T> &p) const {
             return static_cast<TDerived *>(this)->template backprojectImpl<T>(p);
+        }
+
+        /***
+         * @brief Computes filed (angle) of view
+         * @param t See FieldOfViewType
+         * @return angle in degrees
+         */
+        double getFieldOfView(FieldOfViewType t)
+        {
+            return static_cast<TDerived *>(this)->getFieldOfViewImpl(t);
         }
 
 
@@ -99,8 +121,7 @@ namespace intrinsics {
          * @brief Getter for radius of the image
          * @return radius of the image
          */
-        double getImageRadius() const
-        {
+        double getImageRadius() const {
             return r_;
         }
 

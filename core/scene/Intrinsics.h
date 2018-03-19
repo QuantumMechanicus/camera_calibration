@@ -5,9 +5,8 @@
 #ifndef CAMERA_CALIBRATION_CAMERA_INTRINSICS_H
 #define CAMERA_CALIBRATION_CAMERA_INTRINSICS_H
 
-#include <Eigen/Dense>
-#include "../interfaces/Abstract_Estimator.h"
-#include "../interfaces/IIntrinsics.h"
+#include <IIntrinsics.h>
+#include <DivisionModelUtilities.h>
 
 namespace intrinsics {
 
@@ -15,6 +14,7 @@ namespace intrinsics {
 /**
  * @brief Intrinsic parameters of division model for radial distortion (see A. W. Fitzgibbon "Simultaneous linear estimation of multiple view geometry and lens distortion")
  * \f$ x_u = \frac{x_d}{1 + \lambda_1 ||x_d||^2 + ... \lambda_N ||x_d||^{2N}} \f$
+ * NB: we suppose that all stored parameters are computed for normalized image
  */
     using FocalLength = double;
 
@@ -26,6 +26,10 @@ namespace intrinsics {
         Eigen::Matrix<double, N, 1> lambdas_;
 
         friend class AbstractIntrinsics<DivisionModel<N>>;
+
+        enum {
+            NeedsToAlign = (sizeof(Eigen::Matrix<double, N, 1>) % 16) == 0
+        };
 
     protected:
         /**
@@ -49,9 +53,9 @@ namespace intrinsics {
             *this = estimator.getEstimation();
         }
 
-        void estimateParameterImpl(DivisionModel<N> estimator) {
+        void estimateParameterImpl(const DivisionModel<N> &estimator) {
 
-            *this = std::move(estimator);
+            *this = estimator;
         }
 
         void estimateParameterImpl(estimators::AbstractEstimator<Eigen::Matrix<double, 1, N>> &estimator) {
@@ -64,21 +68,36 @@ namespace intrinsics {
             f_ = estimator.getEstimation();
         }
 
-        Eigen::Vector2d undistortImpl(const  Eigen::Vector2d &p) {
-            double rd = p.norm();
-            double denominator(1.0);
-            double r_distorted2 = rd * rd;
-            double r_distorted2_pow = r_distorted2;
-            for (int i = 0; i < lambdas_.rows(); ++i) {
-                denominator += lambdas_[i] * r_distorted2_pow;
-                r_distorted2_pow *= r_distorted2;
-            }
+        template<typename T>
+        scene::TImagePoint<T> undistortImpl(const scene::TImagePoint<T> &p) {
+            return utils::division_model::undistortion<T>(p, lambdas_.template cast<T>());
+        }
 
-            return p / denominator;
+        template<typename T>
+        scene::TImagePoint<T> distortImpl(const scene::TImagePoint<T> &p) {
+            return utils::division_model::distortion<T>(p, lambdas_.template cast<T>());
+        }
 
+        template<typename T>
+        scene::TImagePoint<T> projectImpl(const scene::TWorldPoint<T> &wp) const {
+            Eigen::Matrix<T, 3, 3> calibration = getCalibrationMatrix();
+            return (calibration * wp).hnormalized();
+        }
+
+        template<typename T>
+        scene::THomogeneousImagePoint<T> backprojectImpl(const scene::TImagePoint<T> &p) const {
+            Eigen::Matrix<T, 3, 3> calibration = getCalibrationMatrix();
+            return (calibration.inverse() * p).normalized();
+        }
+
+        double getFieldOfViewImpl(FieldOfViewType t) {
+            //TODO
+            return 0;
         }
 
     public:
+
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(NeedsToAlign)
 
         /**
          * @brief Constructor
@@ -185,26 +204,23 @@ namespace intrinsics {
             return static_cast<int>(lambdas_.rows());
         }
 
-        Eigen::Matrix3d getCalibrationMatrix() const {
-            Eigen::Matrix3d res(Eigen::Matrix3d::Identity());
-            //TODO change remove r
+        template<typename T = double>
+        Eigen::Matrix<T, 3, 3> getCalibrationMatrix() const {
+            Eigen::Matrix<T, 3, 3> res;
+            res.setIdentity();
             auto r = std::sqrt(this->w_ * this->w_ + this->h_ * this->h_) / 2;
             res(0, 0) = res(1, 1) = f_;
             res(0, 2) = ppx_;
             res(1, 2) = ppy_;
-            return res;
+            return res.template cast<T>();
         }
 
-        double getAngeleOfView() const {
-
-            return 2 * std::atan(1 / f_) * 180.0 / M_PI;
-        }
 
         /**
          * @param new_size
          */
         void resizeDistortionCoefficients(long new_size) {
-            assert(N == Eigen::Dynamic && "You can't delete or add coefficients on static model");
+            static_assert(N == Eigen::Dynamic && "You can't delete or add coefficients on static model");
             long old_size = lambdas_.rows();
             lambdas_.conservativeResize(new_size, Eigen::NoChange);
             if (new_size > old_size)
