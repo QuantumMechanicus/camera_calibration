@@ -1,1 +1,2 @@
 add_subdirectory(distortion_groebner_estimator)
+add_subdirectory(tests)
