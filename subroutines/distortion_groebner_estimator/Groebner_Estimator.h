@@ -35,11 +35,13 @@ namespace estimators {
         bool is_estimated_;
         struct AutomaticSolver {
 
-            typedef Eigen::Matrix<double, 7, 1> GPolynomial;
+            typedef Eigen::Matrix<long double, 7, 1> GPolynomial;
             typedef Eigen::Matrix<double, 2, 8> EightPoints;
+            typedef Eigen::Matrix<long double, 2, 8> EightPointsHighPrecision;
+
             typedef std::pair<scene::StdVector<scene::FundamentalMatrix>, std::vector<double> > FundamentalMatricesAndDistortionCoefficients;
 
-            FundamentalMatricesAndDistortionCoefficients runSolver(EightPoints u1d, EightPoints u2d);
+            FundamentalMatricesAndDistortionCoefficients runSolver(EightPointsHighPrecision u1d, EightPointsHighPrecision u2d);
 
             FundamentalMatricesAndDistortionCoefficients solver(const GPolynomial &g1,
                                                                 const GPolynomial &g2,

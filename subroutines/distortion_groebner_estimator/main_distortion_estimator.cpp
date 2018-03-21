@@ -71,10 +71,10 @@ int main(int argc, char *argv[]) {
         stereo_pair.saveScene(archiver);
 
 
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
                 std::chrono::high_resolution_clock::now() - start).count();
 
-        std::cout << std::endl << "Estimation done in " << std::setprecision(5) << duration / 1000.0 << " seconds"
+        std::cout << std::endl << "Estimation done in " << std::setprecision(5) << duration << " seconds"
                   << std::endl;
 
         //TODO add inliers list

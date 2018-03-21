@@ -9,7 +9,7 @@ namespace utils {
 
         std::nth_element(errors.begin(), errors.begin() + int(errors.size() * expected_percent_of_inliers),
                          errors.end());
-        double quantile = errors[int(errors.size() * expected_percent_of_inliers) + 1];
+        double quantile = errors[int(errors.size() * expected_percent_of_inliers)];
         return quantile;
     }
 

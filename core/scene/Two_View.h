@@ -76,12 +76,12 @@ namespace scene {
         }
 
         template <typename T>
-        const Eigen::Vector3d getLeftEpilineImpl(const scene::TImagePoint<T> &u) const {
+        const Eigen::Vector3d getRightEpilineImpl(const scene::TImagePoint<T> &u) const {
             return bifocal_tensor_.template cast<T>() * u.homogeneous();
         }
 
         template <typename T>
-        const Eigen::Vector3d getRightEpilineImpl(const scene::TImagePoint<T> &u) const {
+        const Eigen::Vector3d getLeftEpilineImpl(const scene::TImagePoint<T> &u) const {
             return bifocal_tensor_.template cast<T>().transpose() * u.homogeneous();
         }
 

@@ -18,7 +18,7 @@ TEST(simple_tests, undistortion)
     test_utils::generateTwoViewScene(calibration, calibration, 5, u1, u2, w1, w2, fundamental_matrix,
     leftToRight);
 
-    CHECK_NEAR((intrinsics.undistort<double>(intrinsics.distort<double>(u1.col(0))) - u1.col(0)).norm(), 0, 1e-8);
+    EXPECT_NEAR((intrinsics.undistort<double>(intrinsics.distort<double>(u1.col(0))) - u1.col(0)).norm(), 0, 1e-8);
 
 }
 

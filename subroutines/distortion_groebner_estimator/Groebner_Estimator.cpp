@@ -76,7 +76,7 @@ namespace estimators {
 
 
             AutomaticSolver::FundamentalMatricesAndDistortionCoefficients models = groebner_automatic_solver.runSolver(
-                    subset_Q1, subset_Q2);
+                    subset_Q1.template cast<long double>(), subset_Q2.template cast<long double>());
 
             unsigned long count = models.first.size();
             for (std::size_t i = 0; i < count; ++i) {
@@ -127,7 +127,7 @@ namespace estimators {
                                                             const GPolynomial &g3, const GPolynomial &g4,
                                                             const GPolynomial &g5, const GPolynomial &g6,
                                                             const GPolynomial &g7, const GPolynomial &g8) {
-        Eigen::Matrix<double, 59, 1> c;
+        Eigen::Matrix<long double, 59, 1> c;
         c(0) = -g6(2);
         c(1) = g5(2) - g6(5);
         c(2) = -g6(1);
@@ -212,7 +212,7 @@ namespace estimators {
         c(58) = g1(6) * g4(6) - g2(6) * g3(6);
 
 
-        Eigen::Matrix<double, 32, 48> M = Eigen::Matrix<double, 32, 48>::Zero();
+        Eigen::Matrix<long double, 32, 48> M = Eigen::Matrix<long double, 32, 48>::Zero();
 
         M(0, 4) = c[0];
         M(1, 5) = c[0];
@@ -567,7 +567,7 @@ namespace estimators {
         int mrows[10] = {32, 31, 30, 29, 28, 25, 22, 21, 20, 19};
         int arows[10] = {6, 7, 9, 10, 11, 12, 13, 14, 15, 16};
 
-        Eigen::Matrix<double, 16, 16> A;
+        Eigen::Matrix<long double, 16, 16> A;
         A.setZero();
         A(0, 1) = 1;
         A(1, 4) = 1;
@@ -581,24 +581,24 @@ namespace estimators {
 
             }
 
-        Eigen::EigenSolver<Eigen::Matrix<double, 16, 16> > eigen_solver(A);
+        Eigen::EigenSolver<Eigen::Matrix<long double, 16, 16> > eigen_solver(A);
 
 
         auto V = eigen_solver.eigenvectors();
         auto sol = (V.template block<3, 16>(1, 0) *
-                    Eigen::DiagonalMatrix<std::complex<double>, 16>(
+                    Eigen::DiagonalMatrix<std::complex<long double>, 16>(
                             V.template block<1, 16>(0, 0).cwiseInverse())).eval();
         sol.row(0).swap(sol.row(2));
         FundamentalMatricesAndDistortionCoefficients res;
         for (size_t k = 0; k < sol.cols(); ++k) {
             if (std::abs(sol(0, k).imag()) < utils::EPS) {
-                double lambda = sol(2, k).real();
+                long double lambda = sol(2, k).real();
 
-                double f31 = sol(0, k).real();
-                double f32 = sol(1, k).real();
+                long double f31 = sol(0, k).real();
+                long double f32 = sol(1, k).real();
 
 
-                Eigen::Matrix<double, 7, 1> mon;
+                Eigen::Matrix<long double, 7, 1> mon;
                 mon(0) = f31 * lambda;
                 mon(1) = f32 * lambda;
                 mon(2) = lambda * lambda;
@@ -606,12 +606,12 @@ namespace estimators {
                 mon(4) = f32;
                 mon(5) = lambda;
                 mon(6) = 1;
-                double f11 = -mon.transpose() * g1;
-                double f12 = -mon.transpose() * g2;
-                double f13 = -mon.transpose() * g6;
-                double f21 = -mon.transpose() * g3;
-                double f22 = -mon.transpose() * g4;
-                double f23 = -mon.transpose() * g8;
+                long double f11 = -mon.transpose() * g1;
+                long double f12 = -mon.transpose() * g2;
+                long double f13 = -mon.transpose() * g6;
+                long double f21 = -mon.transpose() * g3;
+                long double f22 = -mon.transpose() * g4;
+                long double f23 = -mon.transpose() * g8;
 
 
                 Eigen::Matrix3d resF;
@@ -636,9 +636,9 @@ namespace estimators {
 
     GroebnerDivisionModelEstimator::AutomaticSolver::FundamentalMatricesAndDistortionCoefficients
     GroebnerDivisionModelEstimator::AutomaticSolver::runSolver(
-            EightPoints u1d, EightPoints u2d) {
-        Eigen::Matrix<double, 15, 8> C;
-        Eigen::Matrix<double, 8, 15> Cfm;
+            EightPointsHighPrecision u1d, EightPointsHighPrecision u2d) {
+        Eigen::Matrix<long double, 15, 8> C;
+        Eigen::Matrix<long double, 8, 15> Cfm;
 
         C.row(0) = u1d.row(0).cwiseProduct(u2d.row(0));
         C.row(1) = u1d.row(0).cwiseProduct(u2d.row(1));
@@ -656,12 +656,12 @@ namespace estimators {
         C.row(12) = u2d.row(1);
         C.row(13) = (u2d.row(0).cwiseProduct(u2d.row(0)) + u2d.row(1).cwiseProduct(u2d.row(1))) +
                     (u1d.row(0).cwiseProduct(u1d.row(0)) + u1d.row(1).cwiseProduct(u1d.row(1)));
-        C.row(14) = Eigen::Matrix<double, 1, 8>::Ones();
+        C.row(14) = Eigen::Matrix<long double, 1, 8>::Ones();
 
         Cfm = C.transpose();
-        Eigen::FullPivHouseholderQR<Eigen::Matrix<double, 8, 8>> qr(Cfm.template block<8, 8>(0, 0));
+        Eigen::FullPivHouseholderQR<Eigen::Matrix<long double, 8, 8>> qr(Cfm.template block<8, 8>(0, 0));
 
-        Eigen::Matrix<double, 8, 7> G;
+        Eigen::Matrix<long double, 8, 7> G;
         G = qr.solve(Cfm.template block<8, 7>(0, 8));
         GPolynomial g1 = G.row(0);
         GPolynomial g2 = G.row(1);
