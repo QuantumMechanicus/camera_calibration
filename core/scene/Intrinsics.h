@@ -92,7 +92,7 @@ namespace intrinsics {
         template<typename T>
         scene::THomogeneousImagePoint<T> backprojectImpl(const scene::TImagePoint<T> &p) const {
             Eigen::Matrix<T, 3, 3> calibration = getCalibrationMatrix();
-            return (calibration.inverse() * p).normalized();
+            return (calibration.inverse() * p.homogeneous()).normalized();
         }
 
         double getFieldOfViewImpl(FieldOfViewType t) {

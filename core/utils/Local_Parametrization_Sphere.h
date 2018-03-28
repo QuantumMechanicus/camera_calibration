@@ -34,10 +34,10 @@ namespace local_parametrization {
         }
 
     public:
-        explicit LocalParameterizationSphere(double norm)
+        explicit LocalParameterizationSphere(double norm = 1)
                 : radius_(norm) {}
 
-        ~LocalParameterizationSphere() final {}
+        ~LocalParameterizationSphere() final = default;
 
 
         bool Plus(const double *x_raw, const double *delta_raw, double *x_plus_delta_raw) const final {

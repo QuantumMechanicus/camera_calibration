@@ -35,9 +35,9 @@ namespace local_parametrization {
                              double *jacobian_raw) const final {
             Eigen::Map<Sophus::SO3d const> T(T_raw);
 
-            Eigen::Map<Eigen::Matrix<double, Sophus::SO3d::DoF, Sophus::SO3d::num_parameters> > jacobian(jacobian_raw);
+            Eigen::Map<Eigen::Matrix<double, Sophus::SO3d::num_parameters, Sophus::SO3d::DoF,  Eigen::RowMajor> > jacobian(jacobian_raw);
 
-            jacobian = T.Dx_this_mul_exp_x_at_0();
+            jacobian = T.Dx_this_mul_exp_x_at_0().transpose();
             return true;
         }
 

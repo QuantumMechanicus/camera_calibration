@@ -28,35 +28,17 @@ namespace test_utils {
         return intrinsics::DivisionModel<N>(lambdas, w, h, f, ppx, ppy);
     }
 
+    Sophus::SE3d generateRandomMotion();
+
     void
     generateTwoViewScene(
             const Eigen::Matrix3d &left_calibration,
             const Eigen::Matrix3d &right_calibration, unsigned int number_of_keypoints, scene::ImagePoints &u1,
             scene::ImagePoints &u2,
             scene::WorldPoints &w1, scene::WorldPoints &w2, scene::FundamentalMatrix &fundamental_matrix,
-            Sophus::SE3d &leftToRight) {
+            Sophus::SE3d &leftToRight);
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<> distribution(0, 1);
-        leftToRight = Sophus::SE3d::sampleUniform(gen);
+    Eigen::Vector3d generatePointOnSphere(const Eigen::Vector3d &shift = Eigen::Vector3d::Zero(), double raidus = 1);
 
-        w1.resize(Eigen::NoChange, number_of_keypoints);
-        w2.resize(Eigen::NoChange, number_of_keypoints);
-        u1.resize(Eigen::NoChange, number_of_keypoints);
-        u2.resize(Eigen::NoChange, number_of_keypoints);
-        for (size_t k = 0; k < number_of_keypoints; ++k) {
-            w1.col(k)(0) = distribution(gen) - 0.5;
-            w1.col(k)(1) = distribution(gen) - 0.5;
-            w1.col(k)(2) = 5 * distribution(gen) + 1;
-            w2.col(k) = leftToRight * w1.col(k);
-            u1.col(k) = (left_calibration * w1.col(k)).hnormalized();
-            u2.col(k) = (right_calibration * w2.col(k)).hnormalized();
-        }
-        fundamental_matrix = right_calibration.transpose().inverse() *
-                             utils::screw_hat<double>(leftToRight.translation()) * leftToRight.so3().matrix() *
-                             left_calibration.inverse();
-
-    }
 }
 #endif //CAMERA_CALIBRATION_TEST_UTILS_H
