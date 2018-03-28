@@ -12,8 +12,9 @@ namespace estimators {
                                                                               lambda_upper_bound(lambda_upper_bound),
                                                                               image_radius(image_radius) {}
 
-    GroebnerDivisionModelEstimator::GroebnerDivisionModelEstimator(const scene::StandartDivisionModelStereoPair &stereo_pair,
-                                                                   GroebnerEstimatorOptions opt)
+    GroebnerDivisionModelEstimator::GroebnerDivisionModelEstimator(
+            const scene::StandartDivisionModelStereoPair &stereo_pair,
+            GroebnerEstimatorOptions opt)
             : stereo_pair_(stereo_pair) {
         number_of_points_ = stereo_pair_.getNumberOfPoints();
         left_residuals_.resize(number_of_points_, 0);
@@ -616,16 +617,16 @@ namespace estimators {
 
                 Eigen::Matrix3d resF;
                 resF.setZero();
-                resF(0, 0) = f11;
-                resF(0, 1) = f12;
-                resF(0, 2) = f13;
-                resF(1, 0) = f21;
-                resF(1, 1) = f22;
-                resF(1, 2) = f23;
-                resF(2, 0) = f31;
-                resF(2, 1) = f32;
+                resF(0, 0) = static_cast<double>(f11);
+                resF(0, 1) = static_cast<double>(f12);
+                resF(0, 2) = static_cast<double>(f13);
+                resF(1, 0) = static_cast<double>(f21);
+                resF(1, 1) = static_cast<double>(f22);
+                resF(1, 2) = static_cast<double>(f23);
+                resF(2, 0) = static_cast<double>(f31);
+                resF(2, 1) = static_cast<double>(f32);
                 resF(2, 2) = 1;
-                res.second.push_back(lambda);
+                res.second.push_back(static_cast<double &&>(lambda));
                 res.first.emplace_back(resF.transpose());
 
             }
@@ -640,38 +641,36 @@ namespace estimators {
         Eigen::Matrix<long double, 15, 8> C;
         Eigen::Matrix<long double, 8, 15> Cfm;
 
+        auto u2dsqsum = u2d.row(0).cwiseAbs2() + u2d.row(1).cwiseAbs2();
+        auto u1dsqsum = u1d.row(0).cwiseAbs2() + u1d.row(1).cwiseAbs2();
+
+
         C.row(0) = u1d.row(0).cwiseProduct(u2d.row(0));
         C.row(1) = u1d.row(0).cwiseProduct(u2d.row(1));
         C.row(2) = u1d.row(1).cwiseProduct(u2d.row(0));
         C.row(3) = u1d.row(1).cwiseProduct(u2d.row(1));
-        C.row(4) = u1d.row(0).cwiseProduct(u2d.row(0).cwiseProduct(u2d.row(0)) + u2d.row(1).cwiseProduct(u2d.row(1)));
+        C.row(4) = u1d.row(0).cwiseProduct(u2dsqsum);
         C.row(5) = u1d.row(0);
-        C.row(6) = u1d.row(1).cwiseProduct(u2d.row(0).cwiseProduct(u2d.row(0)) + u2d.row(1).cwiseProduct(u2d.row(1)));
+        C.row(6) = u1d.row(1).cwiseProduct(u2dsqsum);
         C.row(7) = u1d.row(1);
-        C.row(8) = u2d.row(0).cwiseProduct(u1d.row(0).cwiseProduct(u1d.row(0)) + u1d.row(1).cwiseProduct(u1d.row(1)));
-        C.row(9) = u2d.row(1).cwiseProduct(u1d.row(0).cwiseProduct(u1d.row(0)) + u1d.row(1).cwiseProduct(u1d.row(1)));
-        C.row(10) = (u2d.row(0).cwiseProduct(u2d.row(0)) + u2d.row(1).cwiseProduct(u2d.row(1))).cwiseProduct(
-                u1d.row(0).cwiseProduct(u1d.row(0)) + u1d.row(1).cwiseProduct(u1d.row(1)));
+        C.row(8) = u2d.row(0).cwiseProduct(u1dsqsum);
+        C.row(9) = u2d.row(1).cwiseProduct(u1dsqsum);
+        C.row(10) = (u2dsqsum).cwiseProduct(
+                u1dsqsum);
         C.row(11) = u2d.row(0);
         C.row(12) = u2d.row(1);
-        C.row(13) = (u2d.row(0).cwiseProduct(u2d.row(0)) + u2d.row(1).cwiseProduct(u2d.row(1))) +
-                    (u1d.row(0).cwiseProduct(u1d.row(0)) + u1d.row(1).cwiseProduct(u1d.row(1)));
+        C.row(13) = (u2dsqsum) +
+                    (u1dsqsum);
         C.row(14) = Eigen::Matrix<long double, 1, 8>::Ones();
 
         Cfm = C.transpose();
+
         Eigen::FullPivHouseholderQR<Eigen::Matrix<long double, 8, 8>> qr(Cfm.template block<8, 8>(0, 0));
 
         Eigen::Matrix<long double, 8, 7> G;
         G = qr.solve(Cfm.template block<8, 7>(0, 8));
-        GPolynomial g1 = G.row(0);
-        GPolynomial g2 = G.row(1);
-        GPolynomial g3 = G.row(2);
-        GPolynomial g4 = G.row(3);
-        GPolynomial g5 = G.row(4);
-        GPolynomial g6 = G.row(5);
-        GPolynomial g7 = G.row(6);
-        GPolynomial g8 = G.row(7);
 
-        return solver(g1, g2, g3, g4, g5, g6, g7, g8);
+
+        return solver(G.row(0), G.row(1), G.row(2), G.row(3), G.row(4), G.row(5), G.row(6), G.row(7));
     }
 }
