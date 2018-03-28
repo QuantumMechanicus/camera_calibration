@@ -1,0 +1,53 @@
+\input{preambule/preambule_oneside.tex}
+
+
+\title{Здесь должно быть название}
+\author{Даниил Бордынюк}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\clearpage
+
+\chapter*{Введение}
+\markboth{\uppercase{Введение}}{}
+\addcontentsline{toc}{chapter}{Введение}
+Здесь должно быть небольшое введение.
+
+\section{Используемые инструменты}
+\begin{itemize}
+	\item Основной язык разработки --- C++.
+	\item Библиотека работы с матрицами --- Eigen \cite{eigen}. 
+	\item Реализация групп Ли --- Sophus \cite{sophus}.
+	\item Работа с изображениями --- openCV \cite{opencv_library}.
+	\item Решение задачи наименьших квадратов --- ceres-solver \cite{ceres-solver}.
+	\item Распараллеливание задач --- Intel® TBB \cite{tbb}.
+	\item Тестирование и логгирование (на стадии добавления) --- glog \cite{glog} и gtest \cite{gtest}.
+\end{itemize}
+
+\section{Описание работы}
+Здесь должно быть краткое описание работы.
+	
+\chapter{Модель камеры}
+\input{parts/camera.tex}
+
+\chapter{Автоматический решатель}
+\input{parts/groebner_automatic_solver.tex}
+
+\chapter{Нелинейная оптимизация}
+\input{parts/non_linear_optimizer.tex}
+
+\chapter{Оценка фокусных расстояний}
+\input{parts/focal_length_estimator.tex}
+
+\chapter{Bundle adjustment}
+\input{parts/bundle_adjustment.tex}
+
+\chapter{Некоторые результаты}
+\input{parts/results.tex}
+
+
+\bibliographystyle{ugost2008ls}
+\bibliography{parts/refs.bib}
+\end{document}
