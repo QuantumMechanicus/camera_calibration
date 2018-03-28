@@ -1,4 +1,4 @@
-add_executable(test_core main.cpp test_intrinsics.cpp test_sphere_parametrization.cpp test_so3_parametrization.cpp)
+add_executable(test_core main.cpp test_intrinsics.cpp test_sphere_parametrization.cpp test_so3_parametrization.cpp test_camera.cpp)
 
 
 target_link_libraries(test_core PUBLIC test_utils PUBLIC libgtest PUBLIC libgmock)
