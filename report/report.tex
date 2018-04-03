@@ -1,7 +1,7 @@
 \input{preambule/preambule_oneside.tex}
 
 
-\title{Здесь должно быть название}
+\title{Distortion Camera Calibration}
 \author{Даниил Бордынюк}
 
 \begin{document}
@@ -13,7 +13,6 @@
 \chapter*{Введение}
 \markboth{\uppercase{Введение}}{}
 \addcontentsline{toc}{chapter}{Введение}
-Здесь должно быть небольшое введение.
 
 \section{Используемые инструменты}
 \begin{itemize}
@@ -23,11 +22,25 @@
 	\item Работа с изображениями --- openCV \cite{opencv_library}.
 	\item Решение задачи наименьших квадратов --- ceres-solver \cite{ceres-solver}.
 	\item Распараллеливание задач --- Intel® TBB \cite{tbb}.
+	\item Входные параметры --- boost::program\_options \cite{boost}.
 	\item Тестирование и логгирование (на стадии добавления) --- glog \cite{glog} и gtest \cite{gtest}.
 \end{itemize}
 
 \section{Описание работы}
-Здесь должно быть краткое описание работы.
+Работа системы устроена следующим образом:
+\begin{enumerate}
+	\item На вход всем подпрограммам подаются файлы (формат и список аргументов можно посмотреть с помощью help), описывающие параметры камер и ключевые точки (см. \href{https://github.com/QuantumMechanicus/camera_calibration/blob/dev/pipeline/bin/A_data/552.data}{пример}, а так же \href{https://github.com/QuantumMechanicus/camera_calibration/blob/dev/README.md}{описание}). Эти файлы содержат всю необходимую информацию и сохраняют результаты работы подпрограмм.
+	\item Базовая оценка происходит с помощью автоматического решателя (см. \ref{groebner}), который оценивает однопараметрическую модель камеры (см. \ref{model}) и фундаментальную матрицу.
+	\item Затем полученная оценка нелинейно оптимизируется (см. \ref{nonlinear}).
+	\item С помощью оценок на фундаментальные матрицы получаются оценки на фокусные расстояния (см. \ref{focal}).
+	\item После этого все параметры совместно оптимизируются (см. \ref{bundle_adj}).
+
+\section{Зависимости}
+Для работы необходимы установленные последние версии OpenCV, ceres-solver, boost, tbb, а так же пропатченный Eigen (см. \href{https://bitbucket.org/dkorchemkin/eigen/commits/6e3f920c0f5e3e64f3952d6b8589ee74e38f8bef}{1}, \href{https://bitbucket.org/dkorchemkin/eigen/commits/27696f4148ffc4aadaa7871d1900aaac4db51937}{2}).  
+
+	
+
+\end{enumerate}
 	
 \chapter{Модель камеры}
 \input{parts/camera.tex}
@@ -44,7 +57,7 @@
 \chapter{Bundle adjustment}
 \input{parts/bundle_adjustment.tex}
 
-\chapter{Некоторые результаты}
+\chapter{Примеры результата работы}
 \input{parts/results.tex}
 
 

@@ -1,9 +1,17 @@
+\label{bundle_adj}
 \section{Постановка задачи}
-
+\href{https://github.com/QuantumMechanicus/camera_calibration_test/blob/dev/subroutines/global_non_linear_optimizer/Global_Non_Linear_Estimator.h#L30}{Функтор оптимизации} в данной задаче представляет из себя ошибку репроекции, мы оптимизируем по следующему набору параметров:
+\begin{itemize}
+	\item Вращение $R$.
+	\item Напраление трансляции $t$.
+	\item Коэффициенты дисторсии $\lambda_1,...,\lambda_n$.
+	\item Координаты принципиальной точки $pp_x, pp_y$.
+	\item Триангулированные пары инлайеров (в смысле ошибки до эпиполярной кривой), отфильтрованные по ограничению хиральности.
+\end{itemize}	 
 \subsection{Параметризация сферы}
-
+Cфера \href{https://github.com/QuantumMechanicus/camera_calibration_test/blob/dev/core/utils/Local_Parametrization_Sphere.h}{параметризуется}, как базис касательного пространства в точке. Базис строится с помощью векторного произведения относительно самой неколлинеайрной оси $XYZ$.
 \subsection{Параметризация SO(3)}
-
-\subsection{Функтор ошибки}
+Элемент $SO(3)$ \href{https://github.com/QuantumMechanicus/camera_calibration_test/blob/dev/core/utils/Local_Parametrization_SO3.h}{параметризуется} с помощью представления в виде вектора оси вращения длина, которого равна углу поворота.
 
 \section{Реализация}
+Реализацию можно увидеть \href{https://github.com/QuantumMechanicus/camera_calibration_test/tree/dev/subroutines/global_non_linear_optimizer}{здесь}.
