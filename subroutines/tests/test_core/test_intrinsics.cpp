@@ -21,10 +21,10 @@ TEST(simple_tests, distortion_undistortion) {
                                      leftToRight);
 
     for (size_t j = 0; j < NUMBER_OF_KEY_POINTS; ++j) {
-        EXPECT_NEAR((left_intrinsics.undistort<double>(left_intrinsics.distort<double>(u1.col(j))) - u1.col(j)).norm(),
+        EXPECT_NEAR((left_intrinsics.undistort(left_intrinsics.distort(u1.col(j))) - u1.col(j)).norm(),
                     0, 1e-8);
         EXPECT_NEAR(
-                (right_intrinsics.undistort<double>(right_intrinsics.distort<double>(u2.col(j))) - u2.col(j)).norm(), 0,
+                (right_intrinsics.undistort(right_intrinsics.distort(u2.col(j))) - u2.col(j)).norm(), 0,
                 1e-8);
     }
 }
@@ -44,11 +44,11 @@ TEST(simple_tests, project_backproject) {
                                      leftToRight);
 
     for (size_t j = 0; j < NUMBER_OF_KEY_POINTS; ++j) {
-        EXPECT_NEAR((left_intrinsics.project<double>(w1.col(j)) - u1.col(j)).norm(), 0, 1e-8);
-        EXPECT_NEAR((right_intrinsics.project<double>(w2.col(j)) - u2.col(j)).norm(), 0, 1e-8);
+        EXPECT_NEAR((left_intrinsics.project(w1.col(j)) - u1.col(j)).norm(), 0, 1e-8);
+        EXPECT_NEAR((right_intrinsics.project(w2.col(j)) - u2.col(j)).norm(), 0, 1e-8);
 
-        Eigen::Vector3d left_backprojected = left_intrinsics.backproject<double>(u1.col(j));
-        Eigen::Vector3d right_backprojected = right_intrinsics.backproject<double>(u2.col(j));
+        Eigen::Vector3d left_backprojected = left_intrinsics.backproject(u1.col(j));
+        Eigen::Vector3d right_backprojected = right_intrinsics.backproject(u2.col(j));
 
         EXPECT_NEAR((left_backprojected.hnormalized() - w1.col(j).hnormalized()).norm(), 0, 1e-8);
         EXPECT_NEAR((right_backprojected.hnormalized() - w2.col(j).hnormalized()).norm(), 0, 1e-8);

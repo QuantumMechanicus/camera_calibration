@@ -21,10 +21,10 @@ TEST(simple_tests, camera_distortion_undistortion) {
                                      leftToRight);
 
     for (size_t j = 0; j < NUMBER_OF_KEY_POINTS; ++j) {
-        EXPECT_NEAR((left_intrinsics.undistort<double>(left_intrinsics.distort<double>(u1.col(j))) - u1.col(j)).norm(),
+        EXPECT_NEAR((left_intrinsics.undistort(left_intrinsics.distort(u1.col(j))) - u1.col(j)).norm(),
                     0, 1e-8);
         EXPECT_NEAR(
-                (right_intrinsics.undistort<double>(right_intrinsics.distort<double>(u2.col(j))) - u2.col(j)).norm(), 0,
+                (right_intrinsics.undistort(right_intrinsics.distort(u2.col(j))) - u2.col(j)).norm(), 0,
                 1e-8);
     }
 }

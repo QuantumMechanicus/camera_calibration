@@ -38,7 +38,7 @@ namespace estimators {
         Eigen::Matrix<double, 1, 1> distortion_coefficients;
         std::vector<double> errors(number_of_points_);
         distortion_coefficients(0) = distortion_coefficient;
-        stereo_pair_.estimateFundamentalMatrix(fundamental_matrix);
+        stereo_pair_.estimate(fundamental_matrix);
         stereo_pair_.estimateLeftCamera(distortion_coefficients);
         stereo_pair_.estimateRightCamera(distortion_coefficients);
 

@@ -13,19 +13,19 @@
 namespace scene {
 
 
-    template<typename TIntrinsicsModel, typename TLabel = std::string>
+    template<typename TIntrinsicsModel, typename TLabel = std::string, typename TScalar = typename TIntrinsicsModel::Scalar_t>
     class TwoView
-            : public graph::AbstractEdge<scene::Camera<TIntrinsicsModel, TLabel>>, public ITwoView<
-                    TwoView<TIntrinsicsModel, TLabel>> {
+            : public graph::AbstractEdge<scene::Camera<TIntrinsicsModel, TLabel, TScalar>>, public ITwoView<
+                    TwoView<TIntrinsicsModel, TLabel, TScalar>, TScalar> {
 
-        friend class ITwoView<TwoView<TIntrinsicsModel, TLabel>>;
+        friend class ITwoView<TwoView<TIntrinsicsModel, TLabel, TScalar>, TScalar>;
 
-        Eigen::Vector3d relativeTranslation_{};
-        Sophus::SO3d relativeRotation_{};
-        ImagePoints left_keypoints_{};
-        ImagePoints right_keypoints_{};
-        FundamentalMatrix bifocal_tensor_{};
-        Eigen::Matrix<double, 2, Eigen::Dynamic> i1d{}, i2d{};
+        Eigen::Matrix<TScalar, 3, 1> relativeTranslation_{};
+        Sophus::SO3<TScalar> relativeRotation_{};
+        TImagePoints<TScalar> left_keypoints_{};
+        TImagePoints<TScalar> right_keypoints_{};
+        TFundamentalMatrix<TScalar> bifocal_tensor_{};
+        Eigen::Matrix<TScalar, 2, Eigen::Dynamic> i1d{}, i2d{};
         long number_of_points_{};
 
 
@@ -42,66 +42,41 @@ namespace scene {
         }
 
 
-        void estimateFundamentalMatrixImpl(estimators::AbstractEstimator<FundamentalMatrix> &estimator) {
+        void estimateImpl(estimators::AbstractEstimator<FundamentalMatrix> &estimator) {
             bifocal_tensor_ = estimator.getEstimation();
         }
 
-        void estimateFundamentalMatrixImpl(const Eigen::Matrix3d &simple_estimation) {
+        void estimateImpl(const Eigen::Matrix<TScalar, 3, 3> &simple_estimation) {
             bifocal_tensor_ = simple_estimation;
         }
 
-        long getNumberOfPointsImpl() const {
-            return number_of_points_;
+
+        const Eigen::Matrix<TScalar, 3, 1> getRightEpilineImpl(const scene::TImagePoint<TScalar> &u) const {
+            return bifocal_tensor_.template cast<TScalar>() * u.homogeneous();
         }
 
-        const ImagePoints &getLeftKeypointsImpl() const {
-            return left_keypoints_;
+
+        const Eigen::Matrix<TScalar, 3, 1> getLeftEpilineImpl(const scene::TImagePoint<TScalar> &u) const {
+            return bifocal_tensor_.template cast<TScalar>().transpose() * u.homogeneous();
         }
 
-        const ImagePoints &getRightKeypointsImpl() const {
-            return right_keypoints_;
-        }
 
-        const FundamentalMatrix &getFundamentalMatrixImpl() const {
-            return bifocal_tensor_;
-        }
-
-        const FundamentalMatrix getEssentialMatrixImpl() const {
-
-            auto left_K = getLeftIntrinsicsPointer()->getCalibrationMatrix();
-            auto right_K = getRightIntrinsicsPointer()->getCalibrationMatrix();
-
-
-            return right_K.transpose() * bifocal_tensor_ * left_K;
-        }
-
-        template <typename T>
-        const Eigen::Vector3d getRightEpilineImpl(const scene::TImagePoint<T> &u) const {
-            return bifocal_tensor_.template cast<T>() * u.homogeneous();
-        }
-
-        template <typename T>
-        const Eigen::Vector3d getLeftEpilineImpl(const scene::TImagePoint<T> &u) const {
-            return bifocal_tensor_.template cast<T>().transpose() * u.homogeneous();
-        }
-
-        template<typename T>
-        scene::TImagePoint<T> undistortLeftImpl(const scene::TImagePoint<T> &pd) const {
+        scene::TImagePoint<TScalar> undistortLeftImpl(const scene::TImagePoint<TScalar> &pd) const {
             return getLeftIntrinsicsPointer()->undistort(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T>undistortRightImpl(const scene::TImagePoint<T> &pd) const {
+
+        scene::TImagePoint<TScalar> undistortRightImpl(const scene::TImagePoint<TScalar> &pd) const {
             return getRightIntrinsicsPointer()->undistort(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> distortLeftImpl(const scene::TImagePoint<T> &pd) const {
+
+        scene::TImagePoint<TScalar> distortLeftImpl(const scene::TImagePoint<TScalar> &pd) const {
             return getLeftIntrinsicsPointer()->distort(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T>distortRightImpl(const scene::TImagePoint<T> &pd) const {
+
+        scene::TImagePoint<TScalar> distortRightImpl(const scene::TImagePoint<TScalar> &pd) const {
             return getRightIntrinsicsPointer()->distort(pd);
         }
 
@@ -110,16 +85,17 @@ namespace scene {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         using VertexMap_t = typename graph::AbstractEdge<scene::Camera<TIntrinsicsModel>>::VertexMap_t;
+        using Scalar_t = TScalar;
 
         TwoView() = default;
 
         TwoView(std::shared_ptr<VertexMap_t> cameras, TLabel left_camera_label,
                 TLabel right_camera_label,
-                const ImagePoints &left_keypoints,
-                const ImagePoints &right_keypoints,
-                const FundamentalMatrix &bifocal_tensor = FundamentalMatrix::Zero(),
-                const Sophus::SO3d &relativeRotation = Sophus::SO3d(),
-                const Eigen::Vector3d &relativeTranslation = Eigen::Vector3d::Zero())
+                const TImagePoint<TScalar> &left_keypoints,
+                const TImagePoint<TScalar> &right_keypoints,
+                const TFundamentalMatrix<TScalar> &bifocal_tensor = TFundamentalMatrix<TScalar>::Zero(),
+                const Sophus::SO3<TScalar> &relativeRotation = Sophus::SO3<TScalar>(),
+                const Eigen::Matrix<TScalar, 3, 1> &relativeTranslation = Eigen::Matrix<TScalar, 3, 1>::Zero())
                 : graph::AbstractEdge<scene::Camera<TIntrinsicsModel>>(
                 std::move(left_camera_label),
                 std::move(right_camera_label), cameras),
@@ -139,11 +115,13 @@ namespace scene {
             double w = left_camera_.getWidth();
             double h = left_camera_.getHeight();
             if (w > 0 && h > 0) {
-                double r = std::sqrt(w * w + h * h) / 2.0;
+                TScalar r = TScalar(std::sqrt(w * w + h * h) / 2.0);
                 left_keypoints_.row(0) =
-                        (left_keypoints_.row(0) - (w / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose()) / r;
+                        (left_keypoints_.row(0) - (w / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose()) / r;
                 left_keypoints_.row(1) =
-                        (left_keypoints_.row(1) - (h / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose()) / r;
+                        (left_keypoints_.row(1) - (h / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose()) / r;
                 return true;
             }
             return false;
@@ -156,12 +134,14 @@ namespace scene {
             double w = right_camera_.getWidth();
             double h = right_camera_.getHeight();
             if (w > 0 && h > 0) {
-                double r = std::sqrt(w * w + h * h) / 2.0;
+                TScalar r = TScalar(std::sqrt(w * w + h * h) / 2.0);
                 right_keypoints_.row(0) =
-                        (right_keypoints_.row(0) - (w / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose()) /
+                        (right_keypoints_.row(0) - (w / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose()) /
                         r;
                 right_keypoints_.row(1) =
-                        (right_keypoints_.row(1) - (h / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose()) /
+                        (right_keypoints_.row(1) - (h / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose()) /
                         r;
                 return true;
             }
@@ -175,11 +155,13 @@ namespace scene {
             double w = left_camera_.getWidth();
             double h = left_camera_.getHeight();
             if (w > 0 && h > 0) {
-                double r = std::sqrt(w * w + h * h) / 2.0;
+                TScalar r = TScalar(std::sqrt(w * w + h * h) / 2.0);
                 left_keypoints_.row(0) =
-                        r * left_keypoints_.row(0) + (w / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose();
+                        r * left_keypoints_.row(0) + (w / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose();
                 left_keypoints_.row(1) =
-                        r * left_keypoints_.row(1) + (h / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose();
+                        r * left_keypoints_.row(1) + (h / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose();
                 return true;
             }
             return false;
@@ -191,11 +173,13 @@ namespace scene {
             double w = right_camera_.getWidth();
             double h = right_camera_.getHeight();
             if (w > 0 && h > 0) {
-                double r = std::sqrt(w * w + h * h) / 2.0;
+                TScalar r = TScalar(std::sqrt(w * w + h * h) / 2.0);
                 right_keypoints_.row(0) =
-                        r * right_keypoints_.row(0) + (w / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose();
+                        r * right_keypoints_.row(0) + (w / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose();
                 right_keypoints_.row(1) =
-                        r * right_keypoints_.row(1) + (h / 2.0) * Eigen::VectorXd::Ones(number_of_points_).transpose();
+                        r * right_keypoints_.row(1) + (h / TScalar(2.0)) * Eigen::VectorXd::Ones(
+                                number_of_points_).template cast<TScalar>().transpose();
                 return true;
             }
             return false;
@@ -222,26 +206,27 @@ namespace scene {
         void recoverRelativeMotion() {
 
 
-            Eigen::Matrix3d matrix_D;
+            Eigen::Matrix<TScalar, 3, 3> matrix_D;
 
             matrix_D.setZero();
 
-            Eigen::Matrix3d essential_matrix(this->getEssentialMatrix());
+            Eigen::Matrix<TScalar, 3, 3> essential_matrix(this->getEssentialMatrix());
 
 
-            matrix_D(0, 1) = 1;
-            matrix_D(1, 0) = -1;
-            matrix_D(2, 2) = 1;
+            matrix_D(0, 1) = TScalar(1);
+            matrix_D(1, 0) = TScalar(-1);
+            matrix_D(2, 2) = TScalar(1);
 
 
-            Eigen::JacobiSVD<Eigen::Matrix3d> svd(essential_matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
-            Eigen::Matrix3d matrixU = svd.matrixU();
-            Eigen::Matrix3d matrixV = svd.matrixV();
-            Eigen::Matrix3d singVal = svd.singularValues().asDiagonal();
+            Eigen::JacobiSVD<Eigen::Matrix<TScalar, 3, 3>> svd(essential_matrix,
+                                                               Eigen::ComputeFullU | Eigen::ComputeFullV);
+            Eigen::Matrix<TScalar, 3, 3> matrixU = svd.matrixU();
+            Eigen::Matrix<TScalar, 3, 3> matrixV = svd.matrixV();
+            Eigen::Matrix<TScalar, 3, 3> singVal = svd.singularValues().asDiagonal();
 
-            singVal(0, 0) = singVal(1, 1) = 1;
-            singVal(2, 2) = 0;
-            Eigen::Matrix3d original_E = essential_matrix;
+            singVal(0, 0) = singVal(1, 1) = TScalar(1);
+            singVal(2, 2) = TScalar(0);
+            Eigen::Matrix<TScalar, 3, 3> original_E = essential_matrix;
             essential_matrix = matrixU * singVal * matrixV.transpose();
 
             if (matrixU.determinant() < 0)
@@ -249,14 +234,14 @@ namespace scene {
             if (matrixV.determinant() < 0)
                 matrixV = -matrixV;
 
-            Eigen::Matrix3d rotation_matrix = Eigen::Matrix3d::Zero();
-            Eigen::Matrix3d translation_matrix = Eigen::Matrix3d::Zero();
-            Eigen::Vector3d translation_vector = matrixU.col(2);
+            Eigen::Matrix<TScalar, 3, 3> rotation_matrix = Eigen::Matrix<TScalar, 3, 3>::Zero();
+            Eigen::Matrix<TScalar, 3, 3> translation_matrix = Eigen::Matrix<TScalar, 3, 3>::Zero();
+            Eigen::Matrix<TScalar, 3, 1> translation_vector = matrixU.col(2);
             translation_vector.normalize();
             translation_matrix = utils::screw_hat(translation_vector);
 
-            Eigen::Matrix3d current_rotation = Eigen::Matrix3d::Identity();
-            Eigen::Matrix3d current_translation = translation_matrix;
+            Eigen::Matrix<TScalar, 3, 3> current_rotation = Eigen::Matrix<TScalar, 3, 3>::Identity();
+            Eigen::Matrix<TScalar, 3, 3> current_translation = translation_matrix;
 
             int max_counter = 0;
             for (std::size_t k = 0; k < 4; ++k) {
@@ -282,12 +267,12 @@ namespace scene {
                 }
 
                 std::vector<size_t> inliers_ind;
-                Sophus::SE3d leftToRight(current_rotation, utils::inverted_screw_hat(current_translation));
+                Sophus::SE3<TScalar> leftToRight(current_rotation, utils::inverted_screw_hat(current_translation));
 
                 double interval = utils::findChiralityInliers<TwoView<TIntrinsicsModel, TLabel>>(*this,
                                                                                                  0.1,
                                                                                                  inliers_ind,
-                                                                                                 Eigen::Vector2d(
+                                                                                                 Eigen::Matrix<TScalar, 2, 1>(
                                                                                                          getLeftIntrinsicsPointer()->getWidth(),
                                                                                                          getLeftIntrinsicsPointer()->getHeight()).norm() /
                                                                                                  2.0);
@@ -302,7 +287,7 @@ namespace scene {
                     max_counter = counter;
                 }
             }
-            relativeRotation_ = Sophus::SO3d(rotation_matrix);
+            relativeRotation_ = Sophus::SO3<TScalar>(rotation_matrix);
             relativeTranslation_ = utils::inverted_screw_hat(translation_matrix).normalized();
 
         }
@@ -323,35 +308,59 @@ namespace scene {
             return this->getFinishVertex().getIntrinsics();
         }
 
-        const Sophus::SO3d &getRelativeRotation() const {
+        const Sophus::SO3<TScalar> &getRelativeRotation() const {
             return relativeRotation_;
         }
 
 
-        const Eigen::Vector3d &getRelativeTranslation() const {
+        const Eigen::Matrix<TScalar, 3, 1> &getRelativeTranslation() const {
             return relativeTranslation_;
         }
 
-        const Sophus::SO3d &getLeftAbsoluteRotation() const {
+        const Sophus::SO3<TScalar> &getLeftAbsoluteRotation() const {
             return this->getStartVertex().getRotation();
         }
 
-        const Sophus::SO3d &getRightAbsoluteRotation() const {
+        const Sophus::SO3<TScalar> &getRightAbsoluteRotation() const {
             return this->getFinishVertex().getRotation();
         }
 
-        const Eigen::Vector3d &getLeftAbsoluteTranslation() const {
+        const Eigen::Matrix<TScalar, 3, 1> &getLeftAbsoluteTranslation() const {
             return this->getStartVertex().getTranslation();
         }
 
-        const Eigen::Vector3d &getRightAbsoluteTranslation() const {
+        const Eigen::Matrix<TScalar, 3, 1> &getRightAbsoluteTranslation() const {
             return this->getFinishVertex().getTranslation();
+        }
+
+        long getNumberOfPoints() const {
+            return number_of_points_;
+        }
+
+        const TImagePoints<TScalar> &getLeftKeypoints() const {
+            return left_keypoints_;
+        }
+
+        const TImagePoints<TScalar> &getRightKeypoints() const {
+            return right_keypoints_;
+        }
+
+        const TFundamentalMatrix<TScalar> &getFundamentalMatrix() const {
+            return bifocal_tensor_;
+        }
+
+        const TFundamentalMatrix<TScalar> getEssentialMatrix() const {
+            auto left_K = getLeftIntrinsicsPointer()->getCalibrationMatrix();
+            auto right_K = getRightIntrinsicsPointer()->getCalibrationMatrix();
+
+
+            return right_K.transpose() * bifocal_tensor_ * left_K;
         }
 
 
     };
 
-    using StandartDivisionModelStereoPair = TwoView<intrinsics::StandardDivisionModel>;
-    using DynamicDivisionModelStereoPair = TwoView<intrinsics::DynamicDivisionModel>;
+    using StandartDivisionModelStereoPair = TwoView<intrinsics::StandardDivisionModel, std::string, double>;
+    using DynamicDivisionModelStereoPair = TwoView<intrinsics::DynamicDivisionModel, std::string, double>;
 }
 #endif //CAMERA_CALIBRATION_TWO_VIEW_H

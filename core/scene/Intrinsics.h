@@ -18,24 +18,24 @@ namespace intrinsics {
  */
     using FocalLength = double;
 
-    template<int N = 1>
-    class DivisionModel : public AbstractIntrinsics<DivisionModel<N>> {
-        double ppx_{};
-        double ppy_{};
-        double f_{};
-        Eigen::Matrix<double, N, 1> lambdas_;
+    template<int N = 1, typename TScalar = double>
+    class DivisionModel : public AbstractIntrinsics<DivisionModel<N>, TScalar> {
+        TScalar ppx_{};
+        TScalar ppy_{};
+        TScalar f_{};
+        Eigen::Matrix<TScalar, N, 1> lambdas_;
 
-        friend class AbstractIntrinsics<DivisionModel<N>>;
+        friend class AbstractIntrinsics<DivisionModel<N>, TScalar>;
 
         enum {
-            NeedsToAlign = (sizeof(Eigen::Matrix<double, N, 1>) % 16) == 0
+            NeedsToAlign = (sizeof(Eigen::Matrix<TScalar, N, 1>) % 16) == 0
         };
 
     protected:
         /**
          * @brief See definition above
          */
-        bool isEqualImpl(const AbstractIntrinsics<DivisionModel<N>> &other) const {
+        bool isEqualImpl(const AbstractIntrinsics<DivisionModel<N>, TScalar> &other) const {
             const auto *other_casted = dynamic_cast<const DivisionModel<N> *>(&other);
             return other_casted != nullptr && ppx_ == other_casted->getPrincipalPointX() &&
                    ppy_ == other_casted->getPrincipalPointY() &&
@@ -58,12 +58,12 @@ namespace intrinsics {
             *this = estimator;
         }
 
-        void estimateParameterImpl(Eigen::Matrix<double, 1, N> &estimator) {
+        void estimateParameterImpl(Eigen::Matrix<TScalar, 1, N> &estimator) {
 
             lambdas_ = estimator;
         }
 
-        void estimateParameterImpl(estimators::AbstractEstimator<Eigen::Matrix<double, 1, N>> &estimator) {
+        void estimateParameterImpl(estimators::AbstractEstimator<Eigen::Matrix<TScalar, 1, N>> &estimator) {
 
             lambdas_ = estimator.getEstimation();
         }
@@ -73,29 +73,29 @@ namespace intrinsics {
             f_ = estimator.getEstimation();
         }
 
-        template<typename T>
-        scene::TImagePoint<T> undistortImpl(const scene::TImagePoint<T> &p) const {
-            return utils::division_model::undistortion<T>(p, lambdas_.template cast<T>());
+
+        scene::TImagePoint<TScalar> undistortImpl(const scene::TImagePoint<TScalar> &p) const {
+            return utils::division_model::undistortion<TScalar>(p, lambdas_.template cast<TScalar>());
         }
 
-        template<typename T>
-        scene::TImagePoint<T> distortImpl(const scene::TImagePoint<T> &p) const {
-            return utils::division_model::distortion<T>(p, lambdas_.template cast<T>());
+
+        scene::TImagePoint<TScalar> distortImpl(const scene::TImagePoint<TScalar> &p) const {
+            return utils::division_model::distortion<TScalar>(p, lambdas_.template cast<TScalar>());
         }
 
-        template<typename T>
-        scene::TImagePoint<T> projectImpl(const scene::TWorldPoint<T> &wp) const {
-            Eigen::Matrix<T, 3, 3> calibration = getCalibrationMatrix();
+
+        scene::TImagePoint<TScalar> projectImpl(const scene::TWorldPoint<TScalar> &wp) const {
+            Eigen::Matrix<TScalar, 3, 3> calibration = getCalibrationMatrix();
             return (calibration * wp).hnormalized();
         }
 
-        template<typename T>
-        scene::THomogeneousImagePoint<T> backprojectImpl(const scene::TImagePoint<T> &p) const {
-            Eigen::Matrix<T, 3, 3> calibration = getCalibrationMatrix();
+
+        scene::THomogeneousImagePoint<TScalar> backprojectImpl(const scene::TImagePoint<TScalar> &p) const {
+            Eigen::Matrix<TScalar, 3, 3> calibration = getCalibrationMatrix();
             return (calibration.inverse() * p.homogeneous()).normalized();
         }
 
-        double getFieldOfViewImpl(FieldOfViewType t) {
+        TScalar getFieldOfViewImpl(FieldOfViewType t) {
             //TODO
             return 0;
         }
@@ -103,6 +103,9 @@ namespace intrinsics {
     public:
 
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(NeedsToAlign)
+
+        using Scalar_t = TScalar;
+
 
         /**
          * @brief Constructor
@@ -116,10 +119,10 @@ namespace intrinsics {
          * @param f Focal length
          * @param lambdas Parameters of division model
          */
-        explicit DivisionModel(const Eigen::Matrix<double, N, 1> &lambdas, unsigned int w = 0,
+        explicit DivisionModel(const Eigen::Matrix<TScalar, N, 1> &lambdas, unsigned int w = 0,
                                unsigned int h = 0,
-                               double f = 0, double ppx = 0,
-                               double ppy = 0)
+                               TScalar f = 0, TScalar ppx = 0,
+                               TScalar ppy = 0)
                 : AbstractIntrinsics<DivisionModel>(w, h), ppx_(ppx),
                   ppy_(ppy),
                   f_(f),
@@ -133,10 +136,10 @@ namespace intrinsics {
          * @param lambdas Parameters of division model
          * @param n Number of distortion coefficients (lambdas)
          */
-        explicit DivisionModel(unsigned int n, const Eigen::Matrix<double, N, 1> &lambdas, unsigned int w = 0,
+        explicit DivisionModel(unsigned int n, const Eigen::Matrix<TScalar, N, 1> &lambdas, unsigned int w = 0,
                                unsigned int h = 0,
-                               double f = 0, double ppx = 0,
-                               double ppy = 0)
+                               TScalar f = 0, TScalar ppx = 0,
+                               TScalar ppy = 0)
                 : AbstractIntrinsics<DivisionModel>(w, h), ppx_(ppx),
                   ppy_(ppy),
                   f_(f),
@@ -148,9 +151,9 @@ namespace intrinsics {
          * @param ppy Y-axis coordinate of principal point
          * @param f Focal length
          */
-        DivisionModel(unsigned int w, unsigned int h, double f = 0, double ppx = 0,
-                      double ppy = 0) : AbstractIntrinsics<DivisionModel>(w, h), ppx_(ppx), ppy_(ppy),
-                                        f_(f) {
+        DivisionModel(unsigned int w, unsigned int h, TScalar f = 0, TScalar ppx = 0,
+                      TScalar ppy = 0) : AbstractIntrinsics<DivisionModel>(w, h), ppx_(ppx), ppy_(ppy),
+                                         f_(f) {
             assert(N != Eigen::Dynamic && "You should pass number of parameters for dynamic model");
             lambdas_.setZero();
         }
@@ -162,9 +165,9 @@ namespace intrinsics {
          * @param f Focal length
          * @param n Number of distortion coefficients (lambdas)
          */
-        DivisionModel(unsigned int n, unsigned int w, unsigned int h, double f = 0, double ppx = 0,
-                      double ppy = 0) : AbstractIntrinsics<DivisionModel>(w, h), ppx_(ppx), ppy_(ppy),
-                                        f_(f) {
+        DivisionModel(unsigned int n, unsigned int w, unsigned int h, TScalar f = 0, TScalar ppx = 0,
+                      TScalar ppy = 0) : AbstractIntrinsics<DivisionModel>(w, h), ppx_(ppx), ppy_(ppy),
+                                         f_(f) {
             lambdas_.resize(n, Eigen::NoChange);
             lambdas_.setZero();
         }
@@ -175,7 +178,7 @@ namespace intrinsics {
          * @return X-axis coordinate of principal point
          */
 
-        double getPrincipalPointX() const {
+        TScalar getPrincipalPointX() const {
             return ppx_;
         }
 
@@ -184,7 +187,7 @@ namespace intrinsics {
          * @return Y-axis coordinate of principal point
          */
 
-        double getPrincipalPointY() const {
+        TScalar getPrincipalPointY() const {
             return ppy_;
         }
 
@@ -193,7 +196,7 @@ namespace intrinsics {
          * @return Focal length
          */
 
-        double getFocalLength() const {
+        TScalar getFocalLength() const {
             return f_;
         }
 
@@ -201,7 +204,7 @@ namespace intrinsics {
          * @brief Getter for division model coefficients (see definition above)
          * @return Distortion coefficients
          */
-        const Eigen::Matrix<double, N, 1> &getDistortionCoefficients() const {
+        const Eigen::Matrix<TScalar, N, 1> &getDistortionCoefficients() const {
             return lambdas_;
         }
 
@@ -209,15 +212,14 @@ namespace intrinsics {
             return static_cast<int>(lambdas_.rows());
         }
 
-        template<typename T = double>
-        Eigen::Matrix<T, 3, 3> getCalibrationMatrix() const {
-            Eigen::Matrix<T, 3, 3> res;
+
+        Eigen::Matrix<TScalar, 3, 3> getCalibrationMatrix() const {
+            Eigen::Matrix<TScalar, 3, 3> res;
             res.setIdentity();
-            auto r = std::sqrt(this->w_ * this->w_ + this->h_ * this->h_) / 2;
             res(0, 0) = res(1, 1) = f_;
             res(0, 2) = ppx_;
             res(1, 2) = ppy_;
-            return res.template cast<T>();
+            return res;
         }
 
 

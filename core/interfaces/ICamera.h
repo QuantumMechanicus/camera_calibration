@@ -14,7 +14,7 @@ namespace scene {
      * @brief Base class for camera
      * @tparam TDerived --- CRTP
      */
-    template<typename TDerived>
+    template<typename TDerived, typename TScalar = typename TDerived::Scalar_t>
     struct ICamera {
 
         /**
@@ -28,28 +28,28 @@ namespace scene {
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::ImagePoint undistort(const scene::ImagePoint &pd) const {
+        scene::TImagePoint<TScalar> undistort(const scene::TImagePoint<TScalar> &pd) const {
             return static_cast<const TDerived *>(this)->undistortImpl(pd);
         }
 
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::ImagePoint distort(const scene::ImagePoint &p) const {
+        scene::TImagePoint<TScalar> distort(const scene::TImagePoint<TScalar> &p) const {
             return static_cast<const TDerived *>(this)->distortImpl(p);
         }
 
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::ImagePoint project(const scene::WorldPoint &wp) const {
+        scene::TImagePoint<TScalar> project(const scene::TWorldPoint<TScalar> &wp) const {
             return static_cast<const TDerived *>(this)->projectImpl(wp);
         }
 
         /***
          * @brief Expected to call suitable method of intrinsics model
          */
-        scene::HomogeneousWorldPoint backproject(const scene::ImagePoint &p) const {
+        scene::THomogeneousWorldPoint<TScalar> backproject(const scene::TImagePoint<TScalar> &p) const {
             return static_cast<const TDerived *>(this)->backprojectImpl(p);
         }
     };

@@ -13,17 +13,17 @@ namespace scene {
      * @brief Base class for stereo pair
      * @tparam TDerived --- CRTP
      */
-    template<typename TDerived>
+    template<typename TDerived, typename TScalar = typename TDerived::Scalar_t>
     struct ITwoView {
     public:
 
         //TODO forward
         /**
-         * @brief Estimate fundamental matrix via estimator
+         * @brief Estimate two view parameters
          */
         template<typename TEstimator>
-        void estimateFundamentalMatrix(TEstimator &estimator) {
-            static_cast<TDerived *>(this)->estimateFundamentalMatrixImpl(estimator);
+        void estimate(TEstimator &estimator) {
+            static_cast<TDerived *>(this)->estimateImpl(estimator);
         }
 
         /**
@@ -42,79 +42,59 @@ namespace scene {
             static_cast<TDerived *>(this)->estimateRightCameraImpl(estimator);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> undistortLeft(const scene::TImagePoint<T> &pd) const {
-            return static_cast<const TDerived *>(this)->template undistortLeftImpl<T>(pd);
+
+        scene::TImagePoint<TScalar> undistortLeft(const scene::TImagePoint<TScalar> &pd) const {
+            return static_cast<const TDerived *>(this)->template undistortLeftImpl(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> undistortRight(const scene::TImagePoint<T> &pd) const {
-            return static_cast<const TDerived *>(this)->template undistortRightImpl<T>(pd);
+
+        scene::TImagePoint<TScalar> undistortRight(const scene::TImagePoint<TScalar> &pd) const {
+            return static_cast<const TDerived *>(this)->template undistortRightImpl(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> distortLeft(const scene::TImagePoint<T> &pd) const {
-            return static_cast<const TDerived *>(this)->template distortLeftImpl<T>(pd);
+
+        scene::TImagePoint<TScalar> distortLeft(const scene::TImagePoint<TScalar> &pd) const {
+            return static_cast<const TDerived *>(this)->template distortLeftImpl(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> distortRight(const scene::TImagePoint<T> &pd) const {
-            return static_cast<const TDerived *>(this)->template distortRightImpl<T>(pd);
+
+        scene::TImagePoint<TScalar> distortRight(const scene::TImagePoint<TScalar> &pd) const {
+            return static_cast<const TDerived *>(this)->template distortRightImpl(pd);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> projectLeft(const scene::TWorldPoint<T> &wp) const {
-            return static_cast<const TDerived *>(this)->template projectLeftImpl<T>(wp);
+
+        scene::TImagePoint<TScalar> projectLeft(const scene::TWorldPoint<TScalar> &wp) const {
+            return static_cast<const TDerived *>(this)->template projectLeftImpl(wp);
         }
 
-        template<typename T>
-        scene::THomogeneousWorldPoint<T> backprojectLeft(const scene::TImagePoint<T> &p) const {
-            return static_cast<const TDerived *>(this)->template backprojectLeftImpl<T>(p);
+
+        scene::HomogeneousWorldPoint backprojectLeft(const scene::TImagePoint<TScalar> &p) const {
+            return static_cast<const TDerived *>(this)->template backprojectLeftImpl(p);
         }
 
-        template<typename T>
-        scene::TImagePoint<T> projectRight(const scene::TWorldPoint<T> &wp) const {
-            return static_cast<const TDerived *>(this)->template projectRightImpl<T>(wp);
+
+        scene::TImagePoint<TScalar> projectRight(const scene::TWorldPoint<TScalar> &wp) const {
+            return static_cast<const TDerived *>(this)->template projectRightImpl(wp);
         }
 
-        template<typename T>
-        scene::THomogeneousWorldPoint<T> backprojectRight(const scene::TImagePoint<T> &p) const {
-            return static_cast<const TDerived *>(this)->template backprojectRightImpl<T>(p);
+
+        scene::THomogeneousWorldPoint<TScalar> backprojectRight(const scene::TImagePoint<TScalar> &p) const {
+            return static_cast<const TDerived *>(this)->template backprojectRightImpl(p);
+        }
+
+
+        const Eigen::Matrix<TScalar, 3, 1> getLeftEpiline(const scene::TImagePoint<TScalar> &u) const {
+            return static_cast<const TDerived *>(this)->template getLeftEpilineImpl(u);
+        }
+
+
+        const Eigen::Matrix<TScalar, 3, 1> getRightEpiline(const scene::TImagePoint<TScalar> &u) const {
+            return static_cast<const TDerived *>(this)->template getRightEpilineImpl(u);
         }
 
         template<typename T>
         Sophus::SE3<T> getRelativeMotion() const {
             return static_cast<const TDerived *>(this)->template getRelativeMotionImpl();
-        }
-
-        long getNumberOfPoints() const {
-            return static_cast<const TDerived *>(this)->getNumberOfPointsImpl();
-        }
-
-        const ImagePoints &getLeftKeypoints() const {
-            return static_cast<const TDerived *>(this)->getLeftKeypointsImpl();
-        }
-
-        const ImagePoints &getRightKeypoints() const {
-            return static_cast<const TDerived *>(this)->getRightKeypointsImpl();
-        }
-
-        const FundamentalMatrix &getFundamentalMatrix() const {
-            return static_cast<const TDerived *>(this)->getFundamentalMatrixImpl();
-        }
-
-        const FundamentalMatrix getEssentialMatrix() const {
-            return static_cast<const TDerived *>(this)->getEssentialMatrixImpl();
-        }
-
-        template <typename T>
-        const Eigen::Vector3d getLeftEpiline(const scene::TImagePoint<T> &u) const {
-            return static_cast<const TDerived *>(this)->template getLeftEpilineImpl<T>(u);
-        }
-
-        template <typename T>
-        const Eigen::Vector3d getRightEpiline(const scene::TImagePoint<T> &u) const {
-            return static_cast<const TDerived *>(this)->template getRightEpilineImpl<T>(u);
         }
 
 

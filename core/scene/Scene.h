@@ -91,8 +91,8 @@ namespace scene {
 
     };
 
-    using StandartDivisionModelScene = Scene<StandartDivisionModelCamera>;
-    using DynamicDivisionModelScene = Scene<DynamicDivisionModelCamera>;
+    using StandartDivisionModelScene = Scene<StandartDivisionModelCamera, StandartDivisionModelStereoPair >;
+    using DynamicDivisionModelScene = Scene<DynamicDivisionModelCamera, DynamicDivisionModelStereoPair >;
 }
 
 #endif //CAMERA_CALIBRATION_SCENE_H

@@ -14,7 +14,7 @@ namespace intrinsics {
      * HFOV --- horizontal field of view
      * VFOV --- vertical field of view
      */
-    enum FieldOfViewType{
+    enum FieldOfViewType {
         DFOV,
         HFOV,
         VFOV,
@@ -25,7 +25,7 @@ namespace intrinsics {
      * @brief Base class to store intrinsic parameters of camera (e. g. width, height, focal length)
      * @tparam TDerived --- CRTP
      */
-    template<typename TDerived>
+    template<typename TDerived, typename TScalar = typename TDerived::Scalar_t>
     class AbstractIntrinsics {
 
     protected:
@@ -56,18 +56,19 @@ namespace intrinsics {
          * @param ud Image point with distortion
          * @return undistorted image point
          */
-        template<typename T>
-        scene::TImagePoint<T> undistort(const scene::TImagePoint<T> &pd) const {
-            return static_cast<const TDerived *>(this)->template undistortImpl<T>(pd);
+
+        scene::TImagePoint<TScalar> undistort(const scene::TImagePoint<TScalar> &pd) const {
+            return static_cast<const TDerived *>(this)->template undistortImpl(pd);
         }
+
         /***
          * @brief Applies distortion transform
          * @param ud Image point without distortion
          * @return distorted image point
          */
-        template<typename T>
-        scene::TImagePoint<T> distort(const scene::TImagePoint<T> &p) const {
-            return static_cast<const TDerived *>(this)->template distortImpl<T>(p);
+
+        scene::TImagePoint<TScalar> distort(const scene::TImagePoint<TScalar> &p) const {
+            return static_cast<const TDerived *>(this)->template distortImpl(p);
         }
 
         /***
@@ -75,9 +76,9 @@ namespace intrinsics {
          * @param wp Point in 3D world space
          * @return appropriate image point
          */
-        template<typename T>
-        scene::TImagePoint<T> project(const scene::TWorldPoint<T> &wp) const {
-            return static_cast<const TDerived *>(this)->template projectImpl<T>(wp);
+
+        scene::TImagePoint<TScalar> project(const scene::WorldPoint &wp) const {
+            return static_cast<const TDerived *>(this)->template projectImpl(wp);
         }
 
         /***
@@ -85,9 +86,9 @@ namespace intrinsics {
          * @param p Point in undistorted image space
          * @return appropriate ray
          */
-        template<typename T>
-        scene::THomogeneousImagePoint<T> backproject(const scene::TImagePoint<T> &p) const {
-            return static_cast<const TDerived *>(this)->template backprojectImpl<T>(p);
+
+        scene::THomogeneousImagePoint<TScalar> backproject(const scene::TImagePoint<TScalar> &p) const {
+            return static_cast<const TDerived *>(this)->template backprojectImpl(p);
         }
 
         /***
@@ -95,8 +96,7 @@ namespace intrinsics {
          * @param t See FieldOfViewType
          * @return angle in degrees
          */
-        double getFieldOfView(FieldOfViewType t)
-        {
+        double getFieldOfView(FieldOfViewType t) {
             return static_cast<const TDerived *>(this)->getFieldOfViewImpl(t);
         }
 
@@ -130,7 +130,7 @@ namespace intrinsics {
         * @param other Instance of intrinsics
         * @return Expected to be true if type of other and this the same and their fields are equal, otherwise false
         */
-        bool operator==(const AbstractIntrinsics<TDerived> &other) const {
+        bool operator==(const AbstractIntrinsics<TDerived, TScalar> &other) const {
 
             return static_cast<TDerived *>(this)->isEqualImpl(other);
         }
