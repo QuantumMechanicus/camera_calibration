@@ -23,9 +23,9 @@ namespace scene {
 
         friend graph::INode<Camera<TIntrinsicsModel, TLabel, TScalar>, TLabel>;
 
-        std::shared_ptr<TIntrinsicsModel> intrinsics_;
         Sophus::SO3<TScalar> world_rotation_;
         Eigen::Matrix<TScalar, 3, 1> world_translation_;
+        std::shared_ptr<TIntrinsicsModel> intrinsics_;
         TLabel label_;
 
     protected:
@@ -52,21 +52,21 @@ namespace scene {
             return intrinsics_->undistort(pd);
         }
 
-       
+
         scene::TImagePoint<TScalar> distortImpl(const scene::TImagePoint<TScalar> &p) const {
             return intrinsics_->distort(p);
         }
 
-        
+
         scene::TImagePoint<TScalar> projectImpl(const scene::WorldPoint &wp) const {
             return intrinsics_->project(wp);
         }
 
-        
+
         scene::THomogeneousWorldPoint<TScalar> backprojectImpl(const scene::TImagePoint<TScalar> &p) const {
             return intrinsics_->backproject(p);
         }
-        
+
     public:
 
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -74,8 +74,9 @@ namespace scene {
         using Model_t = TIntrinsicsModel;
         using Scalar_t = TScalar;
 
-        Camera() : world_rotation_{}, world_translation_{}, label_{} {
-            intrinsics_ = std::allocate_shared<TIntrinsicsModel>(Eigen::aligned_allocator<TIntrinsicsModel>());
+        Camera() : world_rotation_{}, world_translation_{},
+                   intrinsics_(std::allocate_shared<TIntrinsicsModel>(Eigen::aligned_allocator<TIntrinsicsModel>())),
+                   label_{} {
         }
 
         Camera(Camera &&rhs) noexcept = default;
@@ -93,8 +94,10 @@ namespace scene {
          * @param translation Translation element t of transform from world coordinates to local camera coordinates
          */
         Camera(TLabel label, std::shared_ptr<TIntrinsicsModel> intrinsics, const Sophus::SO3<TScalar> &rotation,
-               const Eigen::Matrix<TScalar, 3,1> &translation) : label_(std::move(label)), intrinsics_(std::move(intrinsics)), world_rotation_(rotation),
-                                                     world_translation_(translation) {}
+               const Eigen::Matrix<TScalar, 3, 1> &translation) : world_rotation_(rotation),
+                                                                  world_translation_(translation),
+                                                                  intrinsics_(std::move(intrinsics)),
+                                                                  label_(std::move(label)) {}
 
 
         /**
@@ -104,11 +107,12 @@ namespace scene {
          * @param translation Translation element t of transform from world coordinates to local camera coordinates
          */
         Camera(TLabel label, TIntrinsicsModel intrinsics, const Sophus::SO3<TScalar> &rotation,
-               const Eigen::Matrix<TScalar, 3, 1> &translation) : label_(std::move(label)),
-                                                     intrinsics_(std::allocate_shared<TIntrinsicsModel>(
-                                                             Eigen::aligned_allocator<TIntrinsicsModel>())),
-                                                     world_rotation_(rotation),
-                                                     world_translation_(translation) {
+               const Eigen::Matrix<TScalar, 3, 1> &translation) :
+                world_rotation_(rotation),
+                world_translation_(translation),
+                intrinsics_(std::allocate_shared<TIntrinsicsModel>(
+                        Eigen::aligned_allocator<TIntrinsicsModel>())),
+                label_(std::move(label)) {
             *intrinsics_ = intrinsics;
         }
 

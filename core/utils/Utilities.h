@@ -160,6 +160,16 @@ namespace utils {
             ErrorFunctor<TStereoPair> cost;
             T left_residual, right_residual;
             bool is_correct = cost(u1d.col(k).eval(), u2d.col(k).eval(), stereo_pair, left_residual, right_residual);
+            LOG_IF(WARNING, !is_correct) << "Bad cost for:\n "
+                                         << u1d.col(k).transpose() << "\n"
+                                         << u2d.col(k).transpose() << "\n"
+                                         << stereo_pair.getFundamentalMatrix()
+                                         << "\n"
+                                         << stereo_pair.getLeftIntrinsicsPointer()->getDistortionCoefficients().transpose()
+                                         << "\n"
+                                         << stereo_pair.getRightIntrinsicsPointer()->getDistortionCoefficients().transpose();
+
+
             left_residuals[k] = image_r * left_residual;
             right_residuals[k] = image_r * right_residual;
         }

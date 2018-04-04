@@ -56,16 +56,17 @@ namespace graph {
         using Weight_t = TWeight;
         using VertexMap_t = scene::StdMap<typename TVertex::Label_t, TVertex>;
 
-        AbstractEdge() : start_vertex_label_{}, end_vertex_label_{} {
-            ptr_to_list_of_vertices_ = std::allocate_shared<VertexMap_t>(Eigen::aligned_allocator<VertexMap_t>());
+        AbstractEdge() : start_vertex_label_{}, end_vertex_label_{},
+                         ptr_to_list_of_vertices_(
+                                 std::allocate_shared<VertexMap_t>(Eigen::aligned_allocator<VertexMap_t>())) {
 
         }
 
         AbstractEdge(typename TVertex::Label_t st_vertex, typename TVertex::Label_t end_vertex,
                      std::shared_ptr<VertexMap_t> ptr_to_list_of_vertices) :
-                ptr_to_list_of_vertices_(std::move(ptr_to_list_of_vertices)),
                 start_vertex_label_(std::move(st_vertex)),
-                end_vertex_label_(std::move(end_vertex)) {}
+                end_vertex_label_(std::move(end_vertex)),
+                ptr_to_list_of_vertices_(std::move(ptr_to_list_of_vertices)) {}
 
         const std::shared_ptr<VertexMap_t> &getVertexListPointer() const {
             return ptr_to_list_of_vertices_;

@@ -19,13 +19,12 @@ namespace scene {
                     TwoView<TIntrinsicsModel, TLabel, TScalar>, TScalar> {
 
         friend class ITwoView<TwoView<TIntrinsicsModel, TLabel, TScalar>, TScalar>;
-
-        Eigen::Matrix<TScalar, 3, 1> relativeTranslation_{};
-        Sophus::SO3<TScalar> relativeRotation_{};
         TImagePoints<TScalar> left_keypoints_{};
         TImagePoints<TScalar> right_keypoints_{};
         TFundamentalMatrix<TScalar> bifocal_tensor_{};
-        Eigen::Matrix<TScalar, 2, Eigen::Dynamic> i1d{}, i2d{};
+        Sophus::SO3<TScalar> relativeRotation_{};
+        Eigen::Matrix<TScalar, 3, 1> relativeTranslation_{};
+        //Eigen::Matrix<TScalar, 2, Eigen::Dynamic> i1d{}, i2d{};
         long number_of_points_{};
 
 

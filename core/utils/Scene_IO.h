@@ -180,12 +180,12 @@ namespace scene_serialization {
 
     template<int N = 1, typename TInfo = std::string>
     class SimpleDivisionModelArchiver {
+        bool overwrite_extrinsics_;
+        bool overwrite_intrinsics_;
+        bool overwrite_info_;
+        std::string camera_info_file_name_;
         std::string intrinsics_parameters_file_name_;
         std::string absolute_motion_file_name_;
-        std::string camera_info_file_name_;
-        bool overwrite_intrinsics_;
-        bool overwrite_extrinsics_;
-        bool overwrite_info_;
 
     public:
         using Camera_t = scene::Camera<intrinsics::DivisionModel<N>, TInfo>;
