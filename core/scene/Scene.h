@@ -11,7 +11,8 @@
 
 namespace scene {
 
-    template<typename TCamera, typename TTwoView = TwoView<typename TCamera::Model_t>>
+    template<typename TCamera, typename TTwoView = TwoView<typename TCamera::Model_t,
+            typename TCamera::Label_t, typename TCamera::Scalar_t>>
     class Scene : public IScene<Scene<TCamera, TTwoView>> {
         friend class IScene<Scene<TCamera, TTwoView>>;
 
@@ -91,8 +92,8 @@ namespace scene {
 
     };
 
-    using StandartDivisionModelScene = Scene<StandartDivisionModelCamera, StandartDivisionModelStereoPair >;
-    using DynamicDivisionModelScene = Scene<DynamicDivisionModelCamera, DynamicDivisionModelStereoPair >;
+    using StandartDivisionModelScene = Scene<StandartDivisionModelCamera, StandartDivisionModelStereoPair>;
+    using DynamicDivisionModelScene = Scene<DynamicDivisionModelCamera, DynamicDivisionModelStereoPair>;
 }
 
 #endif //CAMERA_CALIBRATION_SCENE_H

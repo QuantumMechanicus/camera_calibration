@@ -9,6 +9,7 @@
 
 namespace utils {
     namespace division_model {
+
         template<typename T>
         T undistortionDenominator(const T &r_distorted,
                                   const Eigen::Matrix<T, Eigen::Dynamic, 1> &distortion_coefficients) {
@@ -109,6 +110,54 @@ namespace utils {
             return ud / denominator;
         }
 
+        template<typename TScalar>
+        class DivisionModelWrapperStereoPair : public scene::ITwoView<DivisionModelWrapperStereoPair<TScalar>, TScalar> {
+            friend class scene::ITwoView<DivisionModelWrapperStereoPair<TScalar>, TScalar>;
+
+            Eigen::Matrix<TScalar, Eigen::Dynamic, 1> left_distortion_;
+            Eigen::Matrix<TScalar, Eigen::Dynamic, 1> right_distortion_;
+            scene::TFundamentalMatrix<TScalar> bifocal_tensor_;
+        protected:
+            const Eigen::Matrix<TScalar, 3, 1> getRightEpilineImpl(const scene::TImagePoint<TScalar> &u) const {
+                return bifocal_tensor_.template cast<TScalar>() * u.homogeneous();
+            }
+
+
+            const Eigen::Matrix<TScalar, 3, 1> getLeftEpilineImpl(const scene::TImagePoint<TScalar> &u) const {
+                return bifocal_tensor_.template cast<TScalar>().transpose() * u.homogeneous();
+            }
+
+
+            scene::TImagePoint<TScalar> undistortLeftImpl(const scene::TImagePoint<TScalar> &pd) const {
+                return undistortion(pd, left_distortion_);
+            }
+
+
+            scene::TImagePoint<TScalar> undistortRightImpl(const scene::TImagePoint<TScalar> &pd) const {
+                return undistortion(pd, right_distortion_);
+            }
+
+
+            scene::TImagePoint<TScalar> distortLeftImpl(const scene::TImagePoint<TScalar> &pd) const {
+                return distortion(pd, left_distortion_);
+            }
+
+
+            scene::TImagePoint<TScalar> distortRightImpl(const scene::TImagePoint<TScalar> &pd) const {
+                return distortion(pd, right_distortion_);
+            }
+
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+            DivisionModelWrapperStereoPair(const Eigen::Matrix<TScalar, -1, 1> &left_distortion_,
+                                           const Eigen::Matrix<TScalar, -1, 1> &right_distortion_,
+                                           const scene::TFundamentalMatrix<TScalar> &bifocal_tensor_)
+                    : left_distortion_(left_distortion_), right_distortion_(right_distortion_),
+                      bifocal_tensor_(bifocal_tensor_) {}
+
+
+        };
 
     }
 }

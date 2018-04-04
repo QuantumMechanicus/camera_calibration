@@ -58,12 +58,12 @@ namespace intrinsics {
             *this = estimator;
         }
 
-        void estimateParameterImpl(Eigen::Matrix<TScalar, 1, N> &estimator) {
+        void estimateParameterImpl(Eigen::Matrix<TScalar, N, 1> &estimator) {
 
             lambdas_ = estimator;
         }
 
-        void estimateParameterImpl(estimators::AbstractEstimator<Eigen::Matrix<TScalar, 1, N>> &estimator) {
+        void estimateParameterImpl(estimators::AbstractEstimator<Eigen::Matrix<TScalar, N, 1>> &estimator) {
 
             lambdas_ = estimator.getEstimation();
         }
