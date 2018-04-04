@@ -1,6 +1,6 @@
 \label{bundle_adj}
 \section{Постановка задачи}
-\href{https://github.com/QuantumMechanicus/camera_calibration_test/blob/dev/subroutines/global_non_linear_optimizer/Global_Non_Linear_Estimator.h#L30}{Функтор оптимизации} в данной задаче представляет из себя ошибку репроекции, мы оптимизируем по следующему набору параметров:
+\href{https://github.com/QuantumMechanicus/camera_calibration_test/blob/dev/subroutines/global_non_linear_optimizer/Global_Non_Linear_Estimator.h#L30}{Функтор оптимизации} в данной задаче представляет из себя ошибку репроекции, мы оптимизируем по следующему набору параметров: TODO
 \begin{itemize}
 	\item Матрица вращения $R$.
 	\item Направление перемещения $t$.
@@ -24,7 +24,8 @@ Cфера \href{https://github.com/QuantumMechanicus/camera_calibration_test/blo
 	\item Пусть $\omega$ это трехмерный вектор такой, что его направление это ось вращения $R$, а $\norm{\omega} = \theta$ --- угол поворота.
 	\item Рассмотрим $[\omega]_{\times}$ --- кососимметричную матрицу векторного умножения на $\omega$.
 	\item Тогда $\exp{([\omega]_{\times})} = R$.
-	\item Чтобы осуществить маленькое приращение вращения, найдем по кватерниону $\omega$. Для $\omega$ как элемента линейного пространства осуществим приращение $\Delta\omega$, а затем найдем соответствующую матрицу вращения $\Delta R$, по которой получим новый кватернион $\Delta w$.    
+	\item Чтобы осуществить маленькое приращение вращения, найдем по кватерниону $\omega$. Для $\omega$ как элемента линейного пространства осуществим приращение $\Delta\omega$, а затем найдем соответствующую матрицу вращения $\Delta R$, по которой получим новый кватернион $\Delta w$.   
+	TODO 
 \end{itemize}
 
 \section{Реализация}
