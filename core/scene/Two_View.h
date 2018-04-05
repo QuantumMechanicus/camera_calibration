@@ -90,8 +90,8 @@ namespace scene {
 
         TwoView(std::shared_ptr<VertexMap_t> cameras, TLabel left_camera_label,
                 TLabel right_camera_label,
-                const TImagePoint<TScalar> &left_keypoints,
-                const TImagePoint<TScalar> &right_keypoints,
+                const TImagePoints<TScalar> &left_keypoints,
+                const TImagePoints<TScalar> &right_keypoints,
                 const TFundamentalMatrix<TScalar> &bifocal_tensor = TFundamentalMatrix<TScalar>::Zero(),
                 const Sophus::SO3<TScalar> &relativeRotation = Sophus::SO3<TScalar>(),
                 const Eigen::Matrix<TScalar, 3, 1> &relativeTranslation = Eigen::Matrix<TScalar, 3, 1>::Zero())

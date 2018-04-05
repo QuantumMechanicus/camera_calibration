@@ -7,10 +7,11 @@
 
 #include <boost/math/special_functions/erf.hpp>
 #include <IScene.h>
+#include "Functors.h"
 
 namespace utils {
     static const double EPS = 1e-10;
-
+    //TODO fix bug read nan nan nan matrix
     template<typename TScalar = double, int RowsAtCompileTime = Eigen::Dynamic, int ColsAtCompileTime = Eigen::Dynamic>
     inline bool loadMatrix(const std::string &filename, Eigen::Matrix<TScalar, RowsAtCompileTime, ColsAtCompileTime> &m,
                            bool transposed = false) {
@@ -116,18 +117,6 @@ namespace utils {
     }
 
     template<typename TScalar>
-    auto solvePoly(Eigen::Matrix<TScalar, Eigen::Dynamic, 1> &coefficients) {
-        auto deg = coefficients.size() - 1;
-        coefficients /= coefficients[deg];
-        Eigen::Matrix<TScalar, Eigen::Dynamic, Eigen::Dynamic> companion(deg, deg);
-        companion.setZero();
-        companion.col(deg - 1) = -TScalar(1) * coefficients.topRows(deg);
-        companion.block(1, 0, deg - 1, deg - 1).setIdentity();
-
-        return companion.eigenvalues();
-    }
-
-    template<typename TScalar>
     Eigen::Matrix<TScalar, 3, 3> screw_hat(const Eigen::Matrix<TScalar, 3, 1> &t) {
         Eigen::Matrix<TScalar, 3, 3> t_hat = Eigen::Matrix<TScalar, 3, 3>::Zero(3, 3);
         t_hat << TScalar(0), -t(2), t(1),
@@ -181,17 +170,17 @@ namespace utils {
     double estimateConfidenceInterval(double quantile, double expected_percent_of_inliers);
 
 
-    template<template<typename> class ErrorFunctor, typename TStereoPair>
+    template<typename TStereoPair, template<typename> class ErrorFunctor = functors::EpipolarCurveDistanceError>
     double findInliers(const TStereoPair &stereo_pair, double expected_percent_of_inliers,
                        std::vector<size_t> &inliers_indices, double image_r) {
 
         std::vector<double> left_residuals, right_residuals, errors(
                 static_cast<unsigned long>(stereo_pair.getNumberOfPoints()));
 
-        utils::computeErrors<ErrorFunctor<TStereoPair>, TStereoPair, double>(stereo_pair,
-                                                                             left_residuals,
-                                                                             right_residuals,
-                                                                             image_r);
+        utils::computeErrors<ErrorFunctor, TStereoPair, double>(stereo_pair,
+                                                                left_residuals,
+                                                                right_residuals,
+                                                                image_r);
         for (std::size_t k = 0; k < errors.size(); ++k) {
             errors[k] = std::abs(left_residuals[k]) + std::abs(right_residuals[k]);
         }
@@ -204,10 +193,22 @@ namespace utils {
                 inliers_indices.push_back(k);
             }
         }
+        std::cout << "ER0: " << errors[0] << std::endl;
         return interval;
 
     }
 
+    template<typename T>
+    void forceFundamentalRank(scene::TFundamentalMatrix<T> &f) {
+        Eigen::JacobiSVD<Eigen::Matrix<T, 3, 3>> fmatrix_svd(f,
+                                                             Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::Matrix<T, 3, 1> singular_values = fmatrix_svd.singularValues();
+        singular_values[2] = T(0.0);
+        f = fmatrix_svd.matrixU() * singular_values.asDiagonal() *
+            fmatrix_svd.matrixV().transpose();
+        f = f / f(2, 2);
+
+    }
 
 }
 #endif //CAMERA_CALIBRATION_UTILITIES_H

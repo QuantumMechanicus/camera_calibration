@@ -14,8 +14,8 @@ namespace utils {
     }
 
     double estimateConfidenceInterval(double quantile, double expected_percent_of_inliers) {
-        return quantile * boost::math::erfc_inv((0.95 + 1.0)) /
-               boost::math::erfc_inv((expected_percent_of_inliers + 1.0));
+        return 10;/*quantile * boost::math::erfc_inv((0.95 + 1.0)) /
+               boost::math::erfc_inv((expected_percent_of_inliers + 1.0));*/
 
     }
 }

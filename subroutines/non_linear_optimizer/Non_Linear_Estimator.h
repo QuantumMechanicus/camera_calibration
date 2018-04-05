@@ -11,7 +11,7 @@
 namespace non_linear_optimization {
 
     class DivisionDistortionAndFundamentalMatrixOptimizerFunctor {
-        Eigen::Vector3d left_point_, right_point_;
+        scene::ImagePoint left_point_, right_point_;
         int number_of_distortion_coefficients_;
         double image_radius_;
 
@@ -19,10 +19,10 @@ namespace non_linear_optimization {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         DivisionDistortionAndFundamentalMatrixOptimizerFunctor(
-                Eigen::Vector3d left_point, Eigen::Vector3d right_point,
+                const scene::ImagePoint &left_point, scene::ImagePoint &right_point,
                 int number_of_distortion_coefficients, double image_radius = 1)
-                : left_point_(std::move(left_point)),
-                  right_point_(std::move(right_point)),
+                : left_point_(left_point),
+                  right_point_(right_point),
                   number_of_distortion_coefficients_(number_of_distortion_coefficients),
                   image_radius_(image_radius) {}
 
@@ -35,40 +35,33 @@ namespace non_linear_optimization {
 
             using Vector3T = Eigen::Matrix<T, 3, 1>;
             using Matrix3T = Eigen::Matrix<T, 3, 3>;
-            using VectorNL = Eigen::Matrix<T, Eigen::Dynamic, 1>;
-            scene::TImagePoint<T> left_point_T = left_point_.topRows(2).cast<T>();
-            scene::TImagePoint<T> right_point_T = right_point_.topRows(2).cast<T>();
-            scene::TImagePoint<T> center;
+            using VectorXT = Eigen::Matrix<T, Eigen::Dynamic, 1>;
+            using TStereoPair = utils::division_model::DivisionModelWrapperStereoPair<T>;
+            scene::TImagePoint<T> left_point_T = left_point_.cast<T>();
+            scene::TImagePoint<T> right_point_T = right_point_.cast<T>();
 
 
-            VectorNL lambdas = Eigen::Map<const VectorNL>(lambda_ptr, number_of_distortion_coefficients_);
-
-
+            VectorXT lambdas = Eigen::Map<const VectorXT>(lambda_ptr, number_of_distortion_coefficients_);
             bool is_invertible = utils::division_model::checkUndistortionInvertibility<T>(lambdas);
 
             if (!is_invertible)
                 return false;
 
-            Matrix3T F;
+            Matrix3T fundamental_matrix;
             for (size_t k = 0; k < 3; ++k)
                 for (size_t j = 0; j < 3; ++j) {
                     if (k < 2 || j < 2)
-                        F(k, j) = f_ptr[3 * j + k];
+                        fundamental_matrix(k, j) = f_ptr[3 * j + k];
                 }
 
-            F(2, 2) = T(1);
-            Eigen::JacobiSVD<Matrix3T> fmatrix_svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
-            Vector3T singular_values = fmatrix_svd.singularValues();
-            singular_values[2] = T(0.0);
-            F = fmatrix_svd.matrixU() * singular_values.asDiagonal() *
-                fmatrix_svd.matrixV().transpose();
-            F = F / F(2, 2);
-
+            fundamental_matrix(2, 2) = T(1);
+            utils::forceFundamentalRank(fundamental_matrix);
 
             std::pair<T, T> res;
-            utils::division_model::DivisionModelWrapperStereoPair<T> wrapped_parameters(F, lambdas, lambdas);
+            TStereoPair wrapped_parameters(fundamental_matrix, lambdas);
 
-            functors::EpipolarCurveDistanceError<scene::DynamicDivisionModelStereoPair> cost;
+            functors::EpipolarCurveDistanceError<TStereoPair> cost;
+
             bool is_correct = cost(left_point_T,
                                    right_point_T,
                                    wrapped_parameters,
@@ -96,9 +89,9 @@ namespace non_linear_optimization {
             : public estimators::AbstractEstimator<Eigen::VectorXd>,
               public estimators::AbstractEstimator<scene::FundamentalMatrices> {
 
-        scene::FundamentalMatrices fundamental_matrices_;
+        scene::StdVector<scene::DynamicDivisionModelStereoPair> stereo_pairs_;
         Eigen::VectorXd lambdas_;
-        scene::StdVector<scene::ImagePoints> left_pictures_keypoints_, right_pictures_keypoints_;
+        scene::FundamentalMatrices fs_;
         size_t number_of_pairs_;
         bool is_estimated_;
         NonLinearEstimatorOptions options_;
@@ -112,10 +105,7 @@ namespace non_linear_optimization {
         void getEstimationImpl(scene::FundamentalMatrices &result) override;
 
     public:
-        NonLinearEstimator(const scene::StdVector<scene::ImagePoints> &left_pictures_keypoints,
-                           const scene::StdVector<scene::ImagePoints> &right_pictures_keypoints,
-                           const scene::StdVector<scene::FundamentalMatrix> &fundamental_matrices,
-                           const Eigen::VectorXd &distortion_coefficients,
+        NonLinearEstimator(const scene::StdVector<scene::DynamicDivisionModelStereoPair> &stereo_pairs,
                            NonLinearEstimatorOptions options = NonLinearEstimatorOptions());
 
 

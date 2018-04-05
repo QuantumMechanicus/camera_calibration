@@ -8,6 +8,19 @@
 #include "Utilities.h"
 
 namespace utils {
+
+    template<typename TScalar>
+    auto solvePoly(Eigen::Matrix<TScalar, Eigen::Dynamic, 1> &coefficients) {
+        auto deg = coefficients.size() - 1;
+        coefficients /= coefficients[deg];
+        Eigen::Matrix<TScalar, Eigen::Dynamic, Eigen::Dynamic> companion(deg, deg);
+        companion.setZero();
+        companion.col(deg - 1) = -TScalar(1) * coefficients.topRows(deg);
+        companion.block(1, 0, deg - 1, deg - 1).setIdentity();
+
+        return companion.eigenvalues();
+    }
+
     namespace division_model {
 
         template<typename T>
@@ -58,6 +71,7 @@ namespace utils {
             return u * denominator;
         }
 
+
         template<typename T>
         T findDistortedRadius(const Eigen::Matrix<T, Eigen::Dynamic, 1> &distortion_coefficients, T r) {
             Eigen::Matrix<T, Eigen::Dynamic, 1> checked_distortion_coefficients;
@@ -81,7 +95,7 @@ namespace utils {
                 coeff /= coeff[deg];
 
 
-                auto eigenvalues = utils::solvePoly<T>(coeff);
+                auto eigenvalues = utils::solvePoly(coeff);
                 for (size_t j = 0; j < eigenvalues.rows(); ++j) {
                     T real = eigenvalues[j].real();
                     T imag = eigenvalues[j].imag();
@@ -111,13 +125,63 @@ namespace utils {
         }
 
         template<typename TScalar>
-        class DivisionModelWrapperStereoPair : public scene::ITwoView<DivisionModelWrapperStereoPair<TScalar>, TScalar> {
+        class DivisionModelWrapperStereoPair
+                : public scene::ITwoView<DivisionModelWrapperStereoPair<TScalar>, TScalar> {
             friend class scene::ITwoView<DivisionModelWrapperStereoPair<TScalar>, TScalar>;
 
-            Eigen::Matrix<TScalar, Eigen::Dynamic, 1> left_distortion_;
-            Eigen::Matrix<TScalar, Eigen::Dynamic, 1> right_distortion_;
             scene::TFundamentalMatrix<TScalar> bifocal_tensor_;
+            Eigen::Matrix<TScalar, Eigen::Dynamic, 1> left_distortion_;
+            TScalar left_f_, left_ppx_, left_ppy_;
+            bool symmetric_;
+            Eigen::Matrix<TScalar, Eigen::Dynamic, 1> right_distortion_;
+            TScalar right_f_, right_ppx_, right_ppy_;
+
         protected:
+
+            Eigen::Matrix<TScalar, 3, 3> getLeftCalibration() const {
+                Eigen::Matrix<TScalar, 3, 3> calibration;
+                calibration.setIdentity();
+                calibration(0, 0) = calibration(1, 1) = left_f_;
+                calibration(0, 2) = left_ppx_;
+                calibration(1, 2) = left_ppy_;
+                return calibration;
+            }
+
+            Eigen::Matrix<TScalar, 3, 3> getRightCalibration() const {
+                if (symmetric_)
+                    return getLeftCalibration();
+
+                Eigen::Matrix<TScalar, 3, 3> calibration;
+                calibration.setIdentity();
+                calibration(0, 0) = calibration(1, 1) = right_f_;
+                calibration(0, 2) = right_ppx_;
+                calibration(1, 2) = right_ppy_;
+                return calibration;
+            }
+
+            scene::TImagePoint<TScalar> projectLeftImpl(const scene::TWorldPoint<TScalar> &wp) const {
+                auto left_calibration = getLeftCalibration();
+                return (left_calibration * wp).hnormalized();
+            }
+
+
+            scene::HomogeneousWorldPoint backprojectLeftImpl(const scene::TImagePoint<TScalar> &p) const {
+                auto left_calibration = getLeftCalibration();
+                return (left_calibration.inverse() * p.homogeneous()).normalized();
+            }
+
+
+            scene::TImagePoint<TScalar> projectRightImpl(const scene::TWorldPoint<TScalar> &wp) const {
+                auto right_calibration = getRightCalibration();
+                return (right_calibration * wp).hnormalized();
+            }
+
+
+            scene::THomogeneousWorldPoint<TScalar> backprojectRightImpl(const scene::TImagePoint<TScalar> &p) const {
+                auto right_calibration = getRightCalibration();
+                return (right_calibration.inverse() * p.homogeneous()).normalized();
+            }
+
             const Eigen::Matrix<TScalar, 3, 1> getRightEpilineImpl(const scene::TImagePoint<TScalar> &u) const {
                 return bifocal_tensor_.template cast<TScalar>() * u.homogeneous();
             }
@@ -134,6 +198,8 @@ namespace utils {
 
 
             scene::TImagePoint<TScalar> undistortRightImpl(const scene::TImagePoint<TScalar> &pd) const {
+                if (symmetric_)
+                    return undistortLeftImpl(pd);
                 return undistortion(pd, right_distortion_);
             }
 
@@ -144,20 +210,60 @@ namespace utils {
 
 
             scene::TImagePoint<TScalar> distortRightImpl(const scene::TImagePoint<TScalar> &pd) const {
+                if (symmetric_)
+                    return distortLeftImpl(pd);
                 return distortion(pd, right_distortion_);
             }
 
         public:
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-            DivisionModelWrapperStereoPair(const Eigen::Matrix<TScalar, -1, 1> &left_distortion_,
-                                           const Eigen::Matrix<TScalar, -1, 1> &right_distortion_,
-                                           const scene::TFundamentalMatrix<TScalar> &bifocal_tensor_)
+            DivisionModelWrapperStereoPair(const scene::TFundamentalMatrix<TScalar> &bifocal_tensor_,
+                                           const Eigen::Matrix<TScalar, -1, 1> &left_distortion_,
+                                           TScalar left_f = TScalar(1), TScalar left_ppx = TScalar(0),
+                                           TScalar left_ppy = TScalar(0),
+                                           bool symmetric = true,
+                                           const Eigen::Matrix<TScalar, -1, 1> &right_distortion_ = Eigen::Matrix<TScalar, -1, 1>(),
+                                           TScalar right_f = TScalar(1),
+                                           TScalar right_ppx = TScalar(0),
+                                           TScalar right_ppy = TScalar(0))
                     : left_distortion_(left_distortion_), right_distortion_(right_distortion_),
-                      bifocal_tensor_(bifocal_tensor_) {}
+                      bifocal_tensor_(bifocal_tensor_), symmetric_(symmetric),
+                      left_f_(left_f), left_ppx_(left_ppx), left_ppy_(left_ppy),
+                      right_f_(right_f), right_ppx_(right_ppx), right_ppy_(right_ppy) {}
 
+            TScalar &getRawLeftFocalLength() {
+                return *left_f_;
+            }
+
+            TScalar &getRawLeftPrincipialPointX() {
+                return *left_ppx_;
+            }
+
+
+            TScalar &getRawLeftPrincipialPointY() {
+                return *left_ppy_;
+            }
+
+            TScalar &getRawFundamental() {
+                return bifocal_tensor_.data();
+            }
+
+            TScalar &getRawRightFocalLength() {
+                return (!symmetric_) ? *right_f_ : *left_f_;
+            }
+
+            TScalar &getRawRightPrincipialPointX() {
+                return (!symmetric_) ? *right_ppx_ : *left_ppx_;
+            }
+
+
+            TScalar &getRawRightPrincipialPointY() {
+                return (!symmetric_) ? *right_ppy_ : *left_ppy_;
+            }
 
         };
+
 
     }
 }

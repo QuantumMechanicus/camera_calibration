@@ -40,10 +40,9 @@ int main(int argc, char *argv[]) {
     auto number_of_pairs = f_infos.size();
 
     std::shared_ptr<scene::DynamicDivisionModelStereoPair::VertexMap_t> cameras
-            = std::make_shared<scene::DynamicDivisionModelStereoPair::VertexMap_t>(
-                    scene::DynamicDivisionModelStereoPair::VertexMap_t());
+            = std::allocate_shared<scene::DynamicDivisionModelStereoPair::VertexMap_t>(Eigen::aligned_allocator<scene::DynamicDivisionModelStereoPair::VertexMap_t>());
 
-    std::vector<scene::DynamicDivisionModelStereoPair> stereo_pairs(number_of_pairs);
+    scene::StdVector<scene::DynamicDivisionModelStereoPair> stereo_pairs(number_of_pairs);
 
     Eigen::VectorXd mean_distortion_coefficient;
     double mean_ppx = 0;
@@ -52,24 +51,28 @@ int main(int argc, char *argv[]) {
     double w = 0;
     double h = 0;
 
-    std::vector<scene_serialization::DynamicSceneArchiver> archivers(
-            number_of_pairs);
+    std::vector<scene_serialization::DynamicSceneArchiver> archivers(number_of_pairs);
+
     for (size_t k = 0; k < number_of_pairs; ++k) {
         archivers[k].parse(f_infos[k]);
         scene::DynamicDivisionModelStereoPair stereo_pair;
         stereo_pair.loadScene(archivers[k], cameras);
-        std::cout << "Focal: " << stereo_pair.getLeftIntrinsicsPointer()->getFocalLength() << std::endl;
-        std::cout << "Focal: " << stereo_pair.getRightIntrinsicsPointer()->getFocalLength() << std::endl;
-
+        std::cout << "DONE\n";
         assert(stereo_pair.getLeftIntrinsicsPointer()->getNumberOfCoefficients() > 0 &&
                stereo_pair.getRightIntrinsicsPointer()->getNumberOfCoefficients() > 0 && "Incorrect intrinsics data");
         stereo_pairs[k] = stereo_pair;
         if (k == 0)
             mean_distortion_coefficient = (stereo_pair.getLeftIntrinsics().getDistortionCoefficients() +
                                            stereo_pair.getRightIntrinsics().getDistortionCoefficients()) / 2.0;
-        else
-            mean_distortion_coefficient += (stereo_pair.getLeftIntrinsics().getDistortionCoefficients() +
-                                            stereo_pair.getRightIntrinsics().getDistortionCoefficients()) / 2.0;
+        else {
+            auto &coeff1 = stereo_pair.getLeftIntrinsics().getDistortionCoefficients();
+            auto &coeff2 = stereo_pair.getRightIntrinsics().getDistortionCoefficients();
+            assert(mean_distortion_coefficient.cols() == coeff1.cols() &&
+                   mean_distortion_coefficient.cols() == coeff2.cols() && "Incorrect intrinsics data");
+
+            mean_distortion_coefficient += (coeff1 +
+                                            coeff2) / 2.0;
+        }
         mean_ppx += (stereo_pair.getLeftIntrinsics().getPrincipalPointX() +
                      stereo_pair.getRightIntrinsics().getPrincipalPointX()) / 2.0;
         mean_ppy += (stereo_pair.getLeftIntrinsics().getPrincipalPointY() +
@@ -89,7 +92,6 @@ int main(int argc, char *argv[]) {
     }
     w /= number_of_pairs;
     h /= number_of_pairs;
-    std::cout << mean_f << std::endl;
     mean_distortion_coefficient /= number_of_pairs;
     mean_ppx /= number_of_pairs;
     mean_ppy /= number_of_pairs;
@@ -98,27 +100,20 @@ int main(int argc, char *argv[]) {
     distortion_coefficients.setConstant(0);
     distortion_coefficients = mean_distortion_coefficient.head(number_of_distortion_coefficients);
 
-    std::shared_ptr<intrinsics::DynamicDivisionModel> common_intrinsics_parameters = std::make_shared<intrinsics::DynamicDivisionModel>(
+
+    std::shared_ptr<intrinsics::DynamicDivisionModel> common_intrinsics_parameters = std::allocate_shared<intrinsics::DynamicDivisionModel>(
+            Eigen::aligned_allocator<intrinsics::DynamicDivisionModel>(),
             distortion_coefficients,
             w, h, mean_f, mean_ppx, mean_ppy);
-
-    scene::StdVector<scene::FundamentalMatrix> fundamental_matrices;
-    scene::StdVector<scene::ImagePoints> left_pictures_keypoints, right_pictures_keypoints;
+    std::cout << distortion_coefficients.transpose() << std::endl;
 
     for (size_t k = 0; k < number_of_pairs; ++k) {
-
-        left_pictures_keypoints.push_back(stereo_pairs[k].getLeftKeypoints());
-        right_pictures_keypoints.push_back(stereo_pairs[k].getRightKeypoints());
-        fundamental_matrices.push_back(stereo_pairs[k].getFundamentalMatrix());
-
         stereo_pairs[k].estimateLeftCamera(common_intrinsics_parameters);
         stereo_pairs[k].estimateRightCamera(common_intrinsics_parameters);
     }
     double image_radius = std::sqrt((w / 2) * (w / 2) + (h / 2) * (h / 2));
     non_linear_optimization::NonLinearEstimatorOptions options(non_linear_iter, percent_of_inliers, 100, image_radius);
-    non_linear_optimization::NonLinearEstimator estimator(left_pictures_keypoints, right_pictures_keypoints,
-                                                          fundamental_matrices,
-                                                          common_intrinsics_parameters->getDistortionCoefficients(),
+    non_linear_optimization::NonLinearEstimator estimator(stereo_pairs,
                                                           options);
 
 

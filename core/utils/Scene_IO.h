@@ -174,7 +174,7 @@ namespace scene_serialization {
                     left_camera.getLabel(),
                     right_camera.getLabel(), left_points,
                     right_points,
-                    fundamental_matrix, relative_motion.rotationMatrix(), relative_motion.translation());
+                    fundamental_matrix, relative_motion.so3(), relative_motion.translation());
         }
     };
 

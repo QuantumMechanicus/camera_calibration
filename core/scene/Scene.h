@@ -21,37 +21,27 @@ namespace scene {
         //TODO approve TwoViews ptr_to_map and scene ptr_to_map
 
     protected:
+
+        template <typename TEstimator>
         void estimateCameraImpl(const typename TCamera::Label_t &label,
-                                estimators::AbstractEstimator<Eigen::Vector3d> &estimator) {
+                                TEstimator &estimator) {
             (*ptr_to_map_)[label].estimate(estimator);
         }
 
-
-        void estimateCameraImpl(const typename TCamera::Label_t &label,
-                                estimators::AbstractEstimator<Sophus::SO3d> &estimator) {
-            (*ptr_to_map_)[label].estimate(estimator);
+        template <typename TEstimator>
+        void estimateStereoPairImpl(size_t k, TEstimator &estimator) {
+            list_of_stereo_pairs_[k].estimate(estimator);
         }
 
-
-        void estimateCameraImpl(const typename TCamera::Label_t &label,
-                                estimators::AbstractEstimator<typename TCamera::Model_t> &estimator) {
-            (*ptr_to_map_)[label].estimate(estimator);
-        }
-
-
-        void estimateStereoPairImpl(size_t k, estimators::AbstractEstimator<FundamentalMatrix> &estimator) {
-            list_of_stereo_pairs_[k].estimateFundamentalMatrix(estimator);
-        }
-
-
+        template <typename TEstimator>
         void
         estimateStereoPairsImpl(
-                estimators::AbstractEstimator<scene::StdVector<FundamentalMatrix>> &estimator) {
+                estimators::AbstractEstimator<scene::StdVector<TEstimator>> &estimator) {
             auto result = estimator.getEstimation();
             assert(result.size() >= list_of_stereo_pairs_.size() &&
                    "Number of estimators should me no less than number of stereo pairs");
             for (size_t k = 0; k < list_of_stereo_pairs_.size(); ++k)
-                list_of_stereo_pairs_[k].estimateFundamentalMatrix(result[k]);
+                list_of_stereo_pairs_[k].estimate(result[k]);
         }
 
     public:
@@ -60,9 +50,7 @@ namespace scene {
 
         using Camera_t = TCamera;
 
-        Scene() = default;
-
-        Scene(std::shared_ptr<typename TTwoView::VertexMap_t> ptr_to_map, std::vector<TTwoView> list_of_stereo_pairs)
+        Scene(std::shared_ptr<typename TTwoView::VertexMap_t> ptr_to_map, scene::StdVector <TTwoView> list_of_stereo_pairs)
                 : ptr_to_map_(std::move(ptr_to_map)), list_of_stereo_pairs_(std::move(list_of_stereo_pairs)) {}
 
         template<typename SceneArchiver>
